@@ -1,6 +1,7 @@
 import pool from "../db/index.db.js";
 
 export const createUserTable = async () => {
+  //users
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
         id            INT AUTO_INCREMENT PRIMARY KEY,

@@ -7,45 +7,7 @@ import { uploadOnCloudinary } from "../utils/Cloudinary.js";
 import crypto from "crypto";
 import { getAccessToken, getRefreshToken, getTemporaryToken } from "../utils/JWTokens.js";
 import { sendEmail, verificationMailGenerator } from "../utils/mail.js";
-import { hashToken, revokeTokenChain } from "../utils/helper.js";
-
-// userAgent: req.headers["user-agent"],
-// ipAddress: req.ip,
-
-const getAccessAndRefreshToken = async (userId, userAgent, userIp, oldTokenId = null) => {
-  try {
-    const [user] = await pool.query(
-      `SELECT * FROM users WHERE id = ?`,
-      [userId]
-    )
-
-    const accessToken = getAccessToken(user[0]);
-    const refreshToken = getRefreshToken(user[0])
-
-    const hashedRefreshToken = hashToken(refreshToken);
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-    const [insertResult] = await pool.query(`
-      INSERT INTO refresh_tokens 
-            (user_id, token_hash, user_agent, ip_address, expires_at) 
-         VALUES (?, ?, ?, ?, ?)
-      `, [userId, hashedRefreshToken, userAgent, userIp, expiresAt]
-    )
-
-    // Rotation: retire the old token, point it at the new one
-    if (oldTokenId) {
-      await pool.query(
-        `UPDATE refresh_tokens SET is_revoked = true, replaced_by = ? WHERE id = ?`,
-        [insertResult.insertId, oldTokenId]
-      );
-    }
-
-    return { accessToken, refreshToken };
-
-  } catch (error) {
-    throw new ApiError(500, `Something went wrong. ${error.message}`)
-  }
-}
+import { getAccessAndRefreshToken, hashToken, revokeTokenChain } from "../utils/helper.js";
 
 export const registerUser = asyncHandler(async (req, res) => {
 
@@ -57,9 +19,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   )
 
   if (user.length > 0 && user[0].is_verified) {
-    return res
-      .status(409)
-      .json(new ApiResponse(409, "User already exist. Please login."))
+    throw new ApiError(409, "User already exist. Please login.")
   }
 
   if (user.length > 0 && !user[0].is_verified) {
@@ -81,14 +41,10 @@ export const registerUser = asyncHandler(async (req, res) => {
         ),
       })
     } catch (error) {
-      return res
-        .status(500)
-        .json(new ApiError(500, `Failed to send verification email. ${error.message}`))
+      throw new ApiError(500, `Failed to send verification email. ${error.message}`)
     }
 
-    return res
-      .status(409)
-      .json(new ApiResponse(409, "User already exist but not verified. Please check your email for verification link."))
+    throw new ApiError(409, "User already exist but not verified. Please check your email for verification link.")
   }
 
   const avatarLocalPath = req.file?.avatar_url?.path;
@@ -102,9 +58,7 @@ export const registerUser = asyncHandler(async (req, res) => {
 
     } catch (error) {
 
-      return res
-        .status(504)
-        .json(new ApiError(504, `Failed to upload avatar image. ${error.message}`))
+      throw new ApiError(504, `Failed to upload avatar image. ${error.message}`)
 
     }
 
@@ -127,9 +81,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     }
 
     if (error.code === 'ER_DUP_ENTRY') {
-      return res
-        .status(409)
-        .json(new ApiResponse(409, "User already exist. Please login."))
+      throw new ApiError(409, "User already exist. Please login.")
     }
 
     throw error;
@@ -154,9 +106,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     })
   } catch (error) {
 
-    return res
-      .status(201)
-      .json(new ApiResponse(201, "User registered, but verification email failed to send. Please use the resend option.", insertedUser))
+    throw new ApiError(500, `Failed to send verification email. ${error.message}`)
   }
 
   return res
@@ -179,9 +129,7 @@ export const verifyEmail = asyncHandler(async (req, res) => {
   )
 
   if (user.length === 0) {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, "Invalid and verification time is over"))
+    throw new ApiError(400, "Invalid user or verification time is over. Please request a new verification email.")    
   }
 
   await pool.query(
@@ -204,15 +152,11 @@ export const resendVerificationEmail = asyncHandler(async (req, res) => {
   )
 
   if (user.length === 0) {
-    return res
-      .status(404)
-      .json(new ApiResponse(404, "User not found"))
+    throw new ApiError(404, "User not found. Please register first.")
   } 
 
   if (user[0].is_verified) {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, "User is already verified. Please login."))
+    throw new ApiError(409, "User already verified. Please login.")
   }
 
   const {unHashedToken, hashedToken, tokenExpiry } = getTemporaryToken()
@@ -232,9 +176,7 @@ export const resendVerificationEmail = asyncHandler(async (req, res) => {
       ),
     })
   } catch (error) {
-    return res
-      .status(500)
-      .json(new ApiError(500, `Failed to send verification email. ${error.message}`))
+    throw new ApiError(500, `Failed to send verification email. ${error.message}`)
   }
 
   return res
@@ -252,17 +194,13 @@ export const loginUser = asyncHandler(async (req, res) => {
   )
 
   if (user.length === 0 || !user[0].is_active) {
-    return res
-      .status(404)
-      .json(new ApiResponse(404, "User not found or inactive"))
+    throw new ApiError(401, "Invalid email or account is inactive. Please contact support.")
   }
 
   const isPasswordMatch = await bcrypt.compare(password, user[0].password);
 
   if (!isPasswordMatch) {
-    return res
-      .status(401)
-      .json(new ApiResponse(401, "Invalid password"))
+    throw new ApiError(401, "Invalid password. Please try again.")
   }
 
   if (!user[0].is_verified) {
@@ -281,14 +219,10 @@ export const loginUser = asyncHandler(async (req, res) => {
         ),
       })
     } catch (error) {
-      return res
-        .status(500)
-        .json(new ApiError(500, `Failed to send verification email. ${error.message}`))
+      throw new ApiError(500, `Failed to send verification email. ${error.message}`)
     }
 
-    return res
-      .status(403)
-      .json(new ApiResponse(403, "User not verified. Please check your email for verification link."))
+    throw new ApiError(403, "User not verified. Please check your email for verification link.")
   }
 
 
@@ -325,9 +259,7 @@ export const logoutUser = asyncHandler(async (req, res) => {
   const { access_token, refresh_token } = req.cookies;
 
   if (!access_token || !refresh_token) {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, "No tokens found in cookies"))
+    throw new ApiError(400, "No tokens found in cookies")
   }
 
   const hashedRefreshToken = hashToken(refresh_token);
@@ -351,9 +283,7 @@ export const refreshToken = asyncHandler(async (req, res) => {
   const { refresh_token } = req.cookies;
 
   if (!refresh_token) {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, "No refresh token found in cookies"))
+    throw new ApiError(400, "No refresh token found in cookies")
   }
 
   const hashedRefreshToken = hashToken(refresh_token);
@@ -366,9 +296,7 @@ export const refreshToken = asyncHandler(async (req, res) => {
   if (tokenRecord.length === 0) {
     res.clearCookie("access_token");
     res.clearCookie("refresh_token");
-    return res
-      .status(401)
-      .json(new ApiResponse(401, "Invalid refresh token"));
+   throw new ApiError(401, "Invalid refresh token");
   }
 
   // Reused after rotation -> possible theft, kill the whole chain
@@ -376,18 +304,14 @@ export const refreshToken = asyncHandler(async (req, res) => {
     await revokeTokenChain(tokenRecord.id);
     res.clearCookie("access_token");
     res.clearCookie("refresh_token");
-    return res
-      .status(401)
-      .json(new ApiResponse(401, "Token reuse detected, session revoked"));
+    throw new ApiError(401, "Token reuse detected, session revoked");
   }
 
   // Expired
   if (new Date(tokenRecord.expires_at) < new Date()) {
     res.clearCookie("access_token");
     res.clearCookie("refresh_token");
-    return res
-      .status(401)
-      .json(new ApiResponse(401, "Refresh token expired"));
+    throw new ApiError(401, "Refresh token expired");
   }
 
   const userId = tokenRecord[0].user_id;
@@ -420,9 +344,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   )
 
   if (user.length === 0) {
-    return res
-      .status(404)
-      .json(new ApiResponse(404, "User not found"))
+    throw new ApiError(404, "User not found")
   }
 
   const { unHashedToken, hashedToken, tokenExpiry } = getTemporaryToken()
@@ -442,9 +364,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
       ),
     })
   } catch (error) {
-    return res
-      .status(500)
-      .json(new ApiError(500, `Failed to send password reset email. ${error.message}`))
+    throw new ApiError(500, `Failed to send password reset email. ${error.message}`)
   } 
 
   return res
@@ -459,15 +379,11 @@ export const resetPassword = asyncHandler(async (req, res) => {
   const { newPassword } = req.body;
 
   if(!token) {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, "Please click on the reset link sent to your email to reset your password."))
+    throw new ApiError(400, "Please click on the reset link sent to your email to reset your password.")
   }
 
   if (!newPassword) {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, "New password is required"))
+    throw new ApiError(400, "New password is required")
   }
 
   const hashedToken = crypto.createHmac('sha256', process.env.TEMPORARY_TOKEN_SECRET)
@@ -481,9 +397,7 @@ export const resetPassword = asyncHandler(async (req, res) => {
   )
 
   if (user.length === 0) {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, "Invalid user or reset time is over. Please request a new password reset link."))
+    throw new ApiError(400, "Invalid user or reset time is over. Please request a new password reset link.")
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -498,3 +412,79 @@ export const resetPassword = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Password reset successfully. Please login with your new password."))  
 
 })
+
+export const deactivateUser = asyncHandler(async (req, res) => {
+
+  const { userId } = req.params;
+  const {adminId} = req.user.id;
+
+  if(Number(userId) === adminId) {
+   throw new ApiError(400, "Admin cannot deactivate their own account.")
+  }
+  
+  const [user] = await pool.query(
+    `SELECT * FROM users WHERE id = ?`,
+    [userId]  
+  )
+
+  if (user.length === 0) {
+    throw new ApiError(404, "User not found")
+  }
+
+  //admin cannot deactivate their own account
+  if(user[0].role === "admin") {
+    throw new ApiError(403, "Admin accounts cannot be deactivated.")
+  }
+
+  if(!user[0].is_active) {
+   throw new ApiError(400, "User account is already deactivated.")
+  }
+  // Deactivate the user account
+  await pool.query(
+    `UPDATE users SET is_active = false WHERE id = ?`,
+    [userId]
+  )
+
+  // Revoke all active refresh tokens so existing sessions die immediately
+  await pool.query(
+    `UPDATE refresh_tokens SET is_revoked = true WHERE user_id = ? AND is_revoked = false`,
+    [userId]
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "User account deactivated successfully."))  
+})
+
+export const activateUser = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const [rows] = await pool.query(
+    `SELECT id, is_active FROM users WHERE id = ?`,
+    [id]
+  );
+
+  const targetUser = rows[0];
+
+  if (!targetUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+  //admin cannot activate their own account
+  if(user[0].role === "admin") {
+    throw new ApiError(403, "Admin accounts cannot be activated.")
+  }
+
+  if (targetUser.is_active) {
+    throw new ApiError(400, "User is already active")
+  }
+
+  await pool.query(
+    `UPDATE users SET is_active = true WHERE id = ?`,
+    [id]
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "User reactivated successfully"));
+});

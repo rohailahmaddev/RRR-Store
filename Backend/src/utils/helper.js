@@ -1,4 +1,6 @@
 
+
+
 //hash tokens
 export const hashToken = (token) => {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -15,5 +17,40 @@ export const revokeTokenChain = async (tokenId) => {
 
   if (rows[0].replaced_by) {
     await revokeTokenChain(rows[0].replaced_by);
+  }
+}
+
+export const getAccessAndRefreshToken = async (userId, userAgent, userIp, oldTokenId = null) => {
+  try {
+    const [user] = await pool.query(
+      `SELECT * FROM users WHERE id = ?`,
+      [userId]
+    )
+
+    const accessToken = getAccessToken(user[0]);
+    const refreshToken = getRefreshToken(user[0])
+
+    const hashedRefreshToken = hashToken(refreshToken);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    const [insertResult] = await pool.query(`
+      INSERT INTO refresh_tokens 
+            (user_id, token_hash, user_agent, ip_address, expires_at) 
+         VALUES (?, ?, ?, ?, ?)
+      `, [userId, hashedRefreshToken, userAgent, userIp, expiresAt]
+    )
+
+    // Rotation: retire the old token, point it at the new one
+    if (oldTokenId) {
+      await pool.query(
+        `UPDATE refresh_tokens SET is_revoked = true, replaced_by = ? WHERE id = ?`,
+        [insertResult.insertId, oldTokenId]
+      );
+    }
+
+    return { accessToken, refreshToken };
+
+  } catch (error) {
+    throw new ApiError(500, `Something went wrong. ${error.message}`)
   }
 }

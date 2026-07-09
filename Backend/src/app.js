@@ -22,8 +22,14 @@ app.use(cookieParser());
 
 
 import authRoutes from "./routes/auth.route.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
 
 app.use("/api/user", authRoutes);
 
+app.use((req, res, next) => {
+  next(new ApiError(404, `Route not found: ${req.originalUrl}`));
+});
 
+//error handler middleware 
+app.use(errorHandler);
 export default app;
