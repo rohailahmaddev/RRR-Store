@@ -44,3 +44,4 @@ export const getTemporaryToken = () => {
   return { unHashedToken, hashedToken, tokenExpiry }
 
 }
+
