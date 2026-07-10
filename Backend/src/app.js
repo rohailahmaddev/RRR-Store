@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { errorHandler } from "./middlewares/errorHandler.js";
+import ApiError from "./utils/ApiError.js";
 
 const app = express();
 
@@ -18,18 +20,24 @@ app.use(express.json({limit:"16kb"}));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
+//cookies parser
 app.use(cookieParser());
 
+import authRoutes from "./routes/auth.routes.js";
+import productRoutes from "./routes/product.routes.js"
 
-import authRoutes from "./routes/auth.route.js";
-import { errorHandler } from "./middlewares/errorHandler.js";
-
+//auth route
 app.use("/api/user", authRoutes);
+
+//product route
+app.use("/api/product",productRoutes)
 
 app.use((req, res, next) => {
   next(new ApiError(404, `Route not found: ${req.originalUrl}`));
 });
 
+
 //error handler middleware 
 app.use(errorHandler);
+
 export default app;

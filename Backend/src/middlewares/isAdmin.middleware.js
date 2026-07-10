@@ -1,3 +1,4 @@
+import { asyncHandler } from "../utils/AsyncHandler.js";
 
 export const isAdmin = asyncHandler(async (req, res, next) => {
   if (req.user?.role !== "admin") {

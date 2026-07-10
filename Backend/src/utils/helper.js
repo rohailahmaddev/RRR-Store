@@ -1,3 +1,5 @@
+import ApiError from "./ApiError.js";
+import { deleteFromCloudinary, uploadOnCloudinary } from "./Cloudinary.js";
 
 
 
@@ -53,4 +55,39 @@ export const getAccessAndRefreshToken = async (userId, userAgent, userIp, oldTok
   } catch (error) {
     throw new ApiError(500, `Something went wrong. ${error.message}`)
   }
+}
+
+export const uploadImagesOnCloudinary = async (filesLocalPath = []) => {
+
+  if(!filesLocalPath || filesLocalPath.length === 0) return []
+
+  console.log(filesLocalPath)
+  
+  let uploadResult = await Promise.allSettled(
+    filesLocalPath.map((filePath) => uploadOnCloudinary(filePath))
+  )
+
+  let upload = []
+  let failed = []
+
+  uploadResult.forEach((result, index) => {
+
+    if(result.status === "fulfilled" && result.value){
+      upload.push(result.value)
+    } else {
+      failed.push(filesLocalPath[index])
+    }
+  
+  });
+
+  if(failed.length>0){
+    await Promise.all(
+      failed.map((img) => deleteFromCloudinary(img.public_id))
+    )
+
+    throw new ApiError(`Failed to upload ${failed.length} image(s)`);
+  }
+
+  return upload
+
 }

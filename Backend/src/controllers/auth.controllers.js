@@ -129,7 +129,7 @@ export const verifyEmail = asyncHandler(async (req, res) => {
   )
 
   if (user.length === 0) {
-    throw new ApiError(400, "Invalid user or verification time is over. Please request a new verification email.")    
+    throw new ApiError(400, "Invalid user or verification time is over. Please request a new verification email.")
   }
 
   await pool.query(
@@ -153,19 +153,19 @@ export const resendVerificationEmail = asyncHandler(async (req, res) => {
 
   if (user.length === 0) {
     throw new ApiError(404, "User not found. Please register first.")
-  } 
+  }
 
   if (user[0].is_verified) {
     throw new ApiError(409, "User already verified. Please login.")
   }
 
-  const {unHashedToken, hashedToken, tokenExpiry } = getTemporaryToken()
+  const { unHashedToken, hashedToken, tokenExpiry } = getTemporaryToken()
 
   await pool.query(
     `UPDATE users SET verify_token = ?, verify_token_expiry = ? WHERE id = ?`,
     [hashedToken, tokenExpiry, user[0].id]
   )
-  
+
   try {
     await sendEmail({
       email: user[0]?.email,
@@ -181,7 +181,7 @@ export const resendVerificationEmail = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Verification email resent successfully. Please check your email for the verification link."))   
+    .json(new ApiResponse(200, "Verification email resent successfully. Please check your email for the verification link."))
 })
 
 export const loginUser = asyncHandler(async (req, res) => {
@@ -272,9 +272,9 @@ export const logoutUser = asyncHandler(async (req, res) => {
 
   // Clear the cookies
   return res
-  .clearCookie("access_token")
-  .clearCookie("refresh_token")
-  .json(new ApiResponse(200, "Logout successfully"))
+    .clearCookie("access_token")
+    .clearCookie("refresh_token")
+    .json(new ApiResponse(200, "Logout successfully"))
 
 })
 
@@ -296,7 +296,7 @@ export const refreshToken = asyncHandler(async (req, res) => {
   if (tokenRecord.length === 0) {
     res.clearCookie("access_token");
     res.clearCookie("refresh_token");
-   throw new ApiError(401, "Invalid refresh token");
+    throw new ApiError(401, "Invalid refresh token");
   }
 
   // Reused after rotation -> possible theft, kill the whole chain
@@ -323,7 +323,7 @@ export const refreshToken = asyncHandler(async (req, res) => {
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  }; 
+  };
 
   return res
     .status(200)
@@ -332,7 +332,7 @@ export const refreshToken = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Token refreshed successfully", {
       access_token: accessToken
     }))
-    
+
 })
 
 export const forgotPassword = asyncHandler(async (req, res) => {
@@ -365,11 +365,11 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     })
   } catch (error) {
     throw new ApiError(500, `Failed to send password reset email. ${error.message}`)
-  } 
+  }
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Please check your email for the reset link."))   
+    .json(new ApiResponse(200, "Please check your email for the reset link."))
 
 })
 
@@ -378,7 +378,7 @@ export const resetPassword = asyncHandler(async (req, res) => {
   const { token } = req.params;
   const { newPassword } = req.body;
 
-  if(!token) {
+  if (!token) {
     throw new ApiError(400, "Please click on the reset link sent to your email to reset your password.")
   }
 
@@ -405,26 +405,26 @@ export const resetPassword = asyncHandler(async (req, res) => {
   await pool.query(
     `UPDATE users SET password = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?`,
     [hashedPassword, user[0].id]
-  ) 
+  )
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Password reset successfully. Please login with your new password."))  
+    .json(new ApiResponse(200, "Password reset successfully. Please login with your new password."))
 
 })
 
 export const deactivateUser = asyncHandler(async (req, res) => {
 
   const { userId } = req.params;
-  const {adminId} = req.user.id;
+  const { adminId } = req.user.id;
 
-  if(Number(userId) === adminId) {
-   throw new ApiError(400, "Admin cannot deactivate their own account.")
+  if (Number(userId) === adminId) {
+    throw new ApiError(400, "Admin cannot deactivate their own account.")
   }
-  
+
   const [user] = await pool.query(
     `SELECT * FROM users WHERE id = ?`,
-    [userId]  
+    [userId]
   )
 
   if (user.length === 0) {
@@ -432,12 +432,12 @@ export const deactivateUser = asyncHandler(async (req, res) => {
   }
 
   //admin cannot deactivate their own account
-  if(user[0].role === "admin") {
+  if (user[0].role === "admin") {
     throw new ApiError(403, "Admin accounts cannot be deactivated.")
   }
 
-  if(!user[0].is_active) {
-   throw new ApiError(400, "User account is already deactivated.")
+  if (!user[0].is_active) {
+    throw new ApiError(400, "User account is already deactivated.")
   }
   // Deactivate the user account
   await pool.query(
@@ -453,7 +453,7 @@ export const deactivateUser = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "User account deactivated successfully."))  
+    .json(new ApiResponse(200, "User account deactivated successfully."))
 })
 
 export const activateUser = asyncHandler(async (req, res) => {
@@ -471,7 +471,7 @@ export const activateUser = asyncHandler(async (req, res) => {
   }
 
   //admin cannot activate their own account
-  if(user[0].role === "admin") {
+  if (user[0].role === "admin") {
     throw new ApiError(403, "Admin accounts cannot be activated.")
   }
 
