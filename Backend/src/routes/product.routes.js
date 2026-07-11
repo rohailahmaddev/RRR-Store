@@ -1,5 +1,5 @@
 import Router from "router"
-import { addProduct, getProducts } from "../controllers/product.controllers.js"
+import { addProduct, deactivateProductListing, getProducts, getSingleProduct } from "../controllers/product.controllers.js"
 import upload from "../middlewares/multer.middleware.js"
 import { isAdmin } from "../middlewares/isAdmin.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js"
@@ -15,5 +15,7 @@ router.route("/add-product").post(
     }]), addProduct)
 
 router.route("/products").get(getProducts)
+router.route("/products/:id").get(getSingleProduct)
+router.route("/delete-product/:id").delete(deactivateProductListing)
 
 export default router;

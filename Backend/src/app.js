@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import ApiError from "./utils/ApiError.js";
+import compression from "compression";
 
 const app = express();
 
@@ -22,6 +23,8 @@ app.use(express.static("public"));
 
 //cookies parser
 app.use(cookieParser());
+
+app.use(compression());
 
 import authRoutes from "./routes/auth.routes.js";
 import productRoutes from "./routes/product.routes.js"
