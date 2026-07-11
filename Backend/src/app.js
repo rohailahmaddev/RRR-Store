@@ -30,7 +30,7 @@ import productRoutes from "./routes/product.routes.js"
 app.use("/api/user", authRoutes);
 
 //product route
-app.use("/api/product",productRoutes)
+app.use("/api",productRoutes)
 
 app.use((req, res, next) => {
   next(new ApiError(404, `Route not found: ${req.originalUrl}`));

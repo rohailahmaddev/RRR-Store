@@ -1,5 +1,5 @@
 import Router from "router"
-import { addProduct } from "../controllers/product.controllers.js"
+import { addProduct, getProducts } from "../controllers/product.controllers.js"
 import upload from "../middlewares/multer.middleware.js"
 import { isAdmin } from "../middlewares/isAdmin.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js"
@@ -13,5 +13,7 @@ router.route("/add-product").post(
         name: "image_url", 
         maxCount: 4
     }]), addProduct)
+
+router.route("/products").get(getProducts)
 
 export default router;

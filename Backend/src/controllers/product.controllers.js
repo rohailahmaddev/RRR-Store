@@ -5,6 +5,7 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { deleteFromCloudinary } from "../utils/Cloudinary.js";
 import { uploadImagesOnCloudinary } from "../utils/helper.js";
 
+
 export const addProduct = asyncHandler(async (req, res) => {
 
     const { product_name, description, price, category_name, sku } = req.body;
@@ -112,5 +113,83 @@ export const addProduct = asyncHandler(async (req, res) => {
 })
 
 export const getProducts = asyncHandler(async (req, res) => {
-    
+
+    const { page=1, limit=20, categoryId, min_price, max_price, sort_by } = req.query;
+    let query = `SELECT products.id, products.sku, products.name, products.description, products.price, products.rating,
+     products.rating_count, product_images.image_url,
+     categories.name AS category_name
+    FROM categories
+    INNER JOIN products ON categories.id = products.category_id AND is_Active = true
+    INNER JOIN product_images ON products.id = product_images.product_id AND is_primary = true
+    `
+    const param = []
+
+    //filter by category
+    if(categoryId){
+       query+=` AND category_id = ?`
+       param.push(categoryId)
+    }
+
+    //filter by min_price
+    if(min_price){
+        query+=` AND price >= ?`
+        param.push(min_price)
+    }
+
+    //filter by max_price
+    if(max_price){
+        query+=` AND price <= ?`
+        param.push(max_price)
+    }
+
+    const sortMap = {
+        price_asc: "price ASC",
+        price_desc: "price DESC",
+        newest: "created_at DESC",
+        rating: "rating DESC",
+    };
+
+    query += ` ORDER BY ${sortMap[sort_by] || "products.created_at DESC"}`
+    const offset = (Number(page)-1) * Number(limit)
+
+    query +=` LIMIT ? OFFSET ? `
+    param.push(Number(limit),offset)
+
+    const [products] = await pool.query(query, param)
+
+    let count_query = `SELECT COUNT(*) AS total FROM products WHERE is_active = true `
+    const count_param = []
+
+    if(categoryId){
+        count_query += `AND category_id = ?`
+        count_param.push(categoryId)
+    }
+
+    //count by min_price
+    if(min_price){
+        count_query+=`AND price >= ?`
+        count_param.push(min_price)
+    }
+
+    //filter by max_price
+    if(max_price){
+        count_query+=`AND price <= ?`
+        count_param.push(max_price)
+    }
+
+    const [count_result] = await pool.query(count_query, count_param)
+    const total_products = count_result[0].total
+
+    return res
+    .status(200)
+    .json( new ApiResponse(200, "Products fetched successfully", {
+      products,
+      pagination: {
+        currentPage: Number(page),
+        totalPages: Math.ceil(total_products / limit),
+        total_products,
+        limit: Number(limit),
+      },
+    }))
+
 })
