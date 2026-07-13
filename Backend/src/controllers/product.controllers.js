@@ -5,40 +5,9 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { deleteFromCloudinary } from "../utils/Cloudinary.js";
 import { uploadImagesOnCloudinary } from "../utils/helper.js";
 
-
-export const addProduct = asyncHandler(async (req, res) => {
-
-    const { product_name, description, price, category_name, sku } = req.body;
-    const product_sizes = JSON.parse(req.body.product_sizes);
-
-    if (!product_name || !description || !price || !category_name || !sku) {
-        throw new ApiError(402, "All fields required");
-    }
-
-    if (!Array.isArray(product_sizes) || product_sizes.length === 0) {
-        throw new ApiError(400, "At least one product size is required");
-    }
-
-    const imageLocalPaths = req.files?.image_url?.map((file) => file.path) || [];
-
-    if (imageLocalPaths.length === 0) {
-        throw new ApiError(400, "At least one image is required");
-    }
-
-    let uploadedImages;
-    try {
-        uploadedImages = await uploadImagesOnCloudinary(imageLocalPaths)
-    } catch (error) {
-        throw new ApiError(504, `Failed to upload product images. ${error.message}`);
-    }
-
-    const connection = await pool.getConnection()
-    try {
-
-        await connection.beginTransaction();
-
-        // --- Find or create category ---
-        let categoryId;
+// find and insert categories
+const insertCategories = async(connection, category_name) => {
+     let categoryId;
 
         const [existingCategory] = await connection.query(
             `SELECT id FROM categories WHERE name = ?`,
@@ -64,6 +33,41 @@ export const addProduct = asyncHandler(async (req, res) => {
             );
             categoryId = newCategory.insertId;
         }
+    return categoryId
+}
+
+export const addProduct = asyncHandler(async (req, res) => {
+
+    const { product_name, description, price, category_name, sku } = req.body;
+    const product_sizes = JSON.parse(req.body.product_sizes);
+
+    if (!product_name || !description || !price || !category_name || !sku) {
+        throw new ApiError(402, "All fields required");
+    }
+
+    if (!Array.isArray(product_sizes) || product_sizes.length === 0) {
+        throw new ApiError(400, "At least one product size is required");
+    }
+
+    const imageLocalPaths = req.files?.image_url?.map((file) => file.path) || [];
+
+    if (imageLocalPaths.length === 0) {
+        throw new ApiError(400, "At least one image is required");
+    }
+
+    let uploadedImages = [];
+    try {
+        uploadedImages = await uploadImagesOnCloudinary(imageLocalPaths)
+    } catch (error) {
+        throw new ApiError(504, `Failed to upload product images. ${error.message}`);
+    }
+
+    const connection = await pool.getConnection()
+    try {
+
+        await connection.beginTransaction();
+
+        const categoryId = insertCategories(connection, category_name)      
 
         //insert product
         const [productResult] = await connection.query(
@@ -75,8 +79,8 @@ export const addProduct = asyncHandler(async (req, res) => {
         //insert images
         for (const img of uploadedImages) {
             await connection.query(
-                `INSERT INTO product_images (product_id, image_url, is_primary) VALUES (?, ?, ?)`,
-                [insertedProductId, img?.url, img === uploadedImages[0]]
+                `INSERT INTO product_images (product_id, image_url, public_id, is_primary) VALUES (?, ?, ?)`,
+                [insertedProductId, img?.url, img.public_id, img === uploadedImages[0]]
             );
         }
 
@@ -96,6 +100,8 @@ export const addProduct = asyncHandler(async (req, res) => {
 
     } catch (error) {
 
+        await connection.rollback();
+
         //delete images form cloudinary after failure
         if (uploadedImages.length > 0) {
             await Promise.all(
@@ -103,7 +109,7 @@ export const addProduct = asyncHandler(async (req, res) => {
             )
         }
 
-        await connection.rollback();
+    
         throw new ApiError(500, `Failed to create product. ${error.message}`);
 
     } finally {
@@ -270,13 +276,179 @@ export const deactivateProductListing = asyncHandler( async (req, res) => {
     }
 
     if (!rows[0].is_active) {
-      throw new ApiError(400, "Product is already deleted");
+      throw new ApiError(400, "Product listing is already deactivated");
     }
 
     await pool.query(`UPDATE products SET is_active = false WHERE id = ?`, [product_Id]);
 
     return res
     .status(200)
-    .json(new ApiResponse(200, "Product deleted successfully"));
+    .json(new ApiResponse(200, "Product listing is deactivated successfully"));
 
+})
+
+export const activateProductListing = asyncHandler( async(req, res) => {
+    const {id: product_id} = req.params;
+
+    const [rows] = await pool.query(
+      `SELECT id, is_active FROM products WHERE id = ?`,
+      [productId]
+    );
+
+    if (rows.length === 0) {
+      throw new ApiError(404, "Product not found");
+    }
+
+    if (rows[0].is_active) {
+      throw new ApiError(400, "Product listing is already activated");
+    }
+
+    await pool.query(`UPDATE products SET is_active = true WHERE id = ?`, [product_Id]);
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, "Product listing activated successfully"));
+})
+
+export const getDeactivatedProductListing = asyncHandler (async(req, res) => {
+    const [deactivated_products] = await pool.query(`
+        SELECT products.id, products.sku, products.name, products.description, products.price, products.rating,
+        products.rating_count,
+        categories.name AS category_name,
+
+        (SELECT image_url 
+            FROM product_images
+            WHERE product_images.product_id = products.id 
+              AND product_images.is_primary = true 
+            LIMIT 1
+        ) AS image_url
+
+        FROM products
+        LEFT JOIN categories
+        ON categories.id = products.category_id
+
+        WHERE products.is_active = false 
+    `)
+
+    return res
+    .stats(200)
+    .json(new ApiResponse(200, "Products fetched successfully", deactivated_products))
+
+})
+
+export const updateProductListing = asyncHandler ( async(req, res) => {
+
+    const { id: product_id } = req.params;
+    const { sku, name, description, price, category_name } = req.body;
+
+    const [row] = await pool.query(`
+        SELECT * FROM products WHERE id = ?
+        `, [product_id])
+
+    if(rows.length === 0) {
+        throw new ApiError(404, "No product found");
+    }
+
+
+    const fieldToUpdate = {}
+
+    if(sku !== undefined) fieldToUpdate.sku = sku;
+    if(name !== undefined) fieldToUpdate.name = name;
+    if(description !== undefined) fieldToUpdate.description = description;
+    if(price !== undefined) fieldToUpdate.price = price;
+
+    const product_sizes = req.body.product_sizes ? JSON.parse(req.body.product_sizes) : null;
+    const deletedImageIds = req.body.deleted_image_ids ? JSON.parse(req.body.deleted_image_ids) : [];
+
+    const imageLocalPaths = req.files?.image_url?.map((file) => file.path) || [];
+
+    if (imageLocalPaths.length === 0) {
+        throw new ApiError(400, "At least one image is required");
+    }
+
+    let uploadedImages = [];
+    try {
+        uploadedImages = await uploadImagesOnCloudinary(imageLocalPaths)
+    } catch (error) {
+        throw new ApiError(504, `Failed to upload product images. ${error.message}`);
+    }
+    
+    const connection = await pool.getConnection();
+
+    try {
+        let categoryId = insertCategories( category_name )
+    
+        let insertProductId;
+        if(Object.keys(fieldToUpdate).length>0){
+            const setClause = Object.keys(fieldToUpdate).map((k) => `${k} = ?`).join(",")
+            const [result] = await pool.query(`
+                UPDATE products SET ${setClause} category_id = ? WHERE id = ?
+                `, [...Object.values(fieldToUpdate), product_id]
+            )
+            insertProductId = result.insertId
+        }
+
+        let deletedImage_public_id;
+        if(deletedImageIds.length>0){
+            const img_public_id = await connection.query(`
+                SELECT public_id FROM product_images WHERE id IN(?)
+                `,[deletedImageIds])
+
+            deletedImage_public_id = img_public_id
+        }
+
+
+        //delete image form database
+        if (deletedImageIds.length > 0) {
+          await connection.query(
+            `DELETE FROM product_images WHERE id IN (?) AND product_id = ?`,
+            [deletedImageIds, insertProductId]
+          );
+        }
+
+        //insert new image url
+        if(uploadedImages.length>0){
+            for (const img of uploadedImages) {
+                await connection.query(
+                    `INSERT INTO product_images (product_id, image_url, is_primary) VALUES (?, ?, ?)`,
+                    [insertedProductId, img?.url, img === uploadedImages[0]]
+                );
+            }
+        }
+
+        // Replace sizes, if provided
+        if (product_sizes && Array.isArray(product_sizes)) {
+          for (const size of product_sizes) {
+            await connection.query(
+              `INSERT INTO product_sizes (product_id, size_name, stock) 
+               VALUES (?, ?, ?) 
+               ON DUPLICATE KEY UPDATE stock = VALUES(stock)`,
+              [productId, size.size_name, size.stock]
+            );
+          }
+        }
+
+        await connection.commit();
+
+        if (imagesToCleanup.length > 0) {
+           await Promise.all(imagesToCleanup.map((img) => deleteFromCloudinary(img.public_id)));
+        }
+
+        return res
+          .status(200)
+          .json(new ApiResponse(200, "Product updated successfully"));
+        
+    } catch (error) {
+
+      await connection.rollback();
+
+      if (uploadedImages.length > 0) {
+        await Promise.all(uploadedImages.map((img) => deleteFromCloudinary(img.public_id)));
+      }
+
+      throw new ApiError(500, `Failed to update product. ${error.message}`);
+    } finally {
+      connection.release();
+    }
+    
 })

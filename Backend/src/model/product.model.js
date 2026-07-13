@@ -30,12 +30,29 @@ export const createProductTable = async () => {
     )
   `);
 
+  // Reviews
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reviews (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        product_id  INT NOT NULL,
+        user_id     INT NOT NULL,
+        rating      TINYINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+        comment     TEXT,
+        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE (product_id, user_id),
+        INDEX idx_reviews_product (product_id)
+    )
+  `);
+
   // Images
   await pool.query(`
     CREATE TABLE IF NOT EXISTS product_images (
         id          INT AUTO_INCREMENT PRIMARY KEY,
         product_id  INT NOT NULL,
         image_url   VARCHAR(500) NOT NULL,
+        public_id VARCHAR(255) NOT NULL,
         is_primary  BOOLEAN DEFAULT false,
         FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
         INDEX idx_images_product (product_id)
@@ -55,19 +72,4 @@ export const createProductTable = async () => {
     )
   `);
 
-  // Reviews
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS reviews (
-        id          INT AUTO_INCREMENT PRIMARY KEY,
-        product_id  INT NOT NULL,
-        user_id     INT NOT NULL,
-        rating      TINYINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
-        comment     TEXT,
-        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        UNIQUE (product_id, user_id),
-        INDEX idx_reviews_product (product_id)
-    )
-  `);
 };
