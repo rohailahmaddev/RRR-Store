@@ -1,5 +1,5 @@
 import Router from "router"
-import { activateProductListing, addProduct, deactivateProductListing, getDeactivatedProductListing, getProducts, getSingleProduct, updateProductListing } from "../controllers/product.controllers.js"
+import { activateProductListing, addProduct, deactivateProductListing, deleteProductSize, getDeactivatedProductListing, getProducts, getSingleProduct, updateProductListing } from "../controllers/product.controllers.js"
 import upload from "../middlewares/multer.middleware.js"
 import { isAdmin } from "../middlewares/isAdmin.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js"
@@ -23,5 +23,6 @@ router.route("/update-product/:id").patch(
         maxCount: 4
     }]),
     updateProductListing)
+router.route("/delete-size/:id").delete(deleteProductSize)
 
 export default router;
