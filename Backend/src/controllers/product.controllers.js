@@ -220,9 +220,14 @@ export const getSingleProduct = asyncHandler(async (req, res) => {
         SELECT products.id, products.sku, products.name, products.description, products.price, products.rating, products.rating_count, 
         c.name AS category_name,
 
-        (SELECT CONCAT('[', GROUP_CONCAT(
-              JSON_OBJECT('size_name', ps.size_name, 'stock', ps.stock)
-            ), ']')
+        (SELECT CONCAT(
+            '[', 
+            GROUP_CONCAT(
+                JSON_OBJECT(
+                    'size_name', ps.size_name, 'stock', ps.stock)
+            ), 
+            ']'
+            )
             FROM product_sizes ps
             WHERE ps.product_id = products.id
         ) AS sizes,
@@ -239,16 +244,34 @@ export const getSingleProduct = asyncHandler(async (req, res) => {
         ) 
            FROM product_images pi
            WHERE pi.product_id = products.id 
-        )AS images
+        )AS images,
 
-        (
-        
-        )
+        COALESCE(
+            (SELECT 
+                CONCAT(
+                    '[',
+                    GROUP_CONCAT(
+                        JSON_OBJECT(
+                            'username', u.full_name,
+                            'avatar',u.avatar_url,
+                            'rating', r.rating,
+                            'comment', r.comment
+                        )
+                    ),
+                    ']'
+                ) 
+               FROM reviews r
+               INNER JOIN users u
+               ON u.id = r.user_id
+               WHERE r.product_id = products.id 
+            ), 
+            '[]'
+        )AS comments
 
         FROM products 
         LEFT JOIN categories c
         ON c.id = products.category_id
-
+        
         WHERE products.id = ?  AND products.is_Active = true
         `, [product_id])
 
@@ -452,120 +475,194 @@ export const updateProductListing = asyncHandler(async (req, res) => {
 
 })
 
-export const deleteProductSize = asyncHandler(async(req, res) => {
+export const deleteProductSize = asyncHandler(async (req, res) => {
 
-    const { id:product_id } = req.params;
+    const { id: product_id } = req.params;
     const { size_name } = req.body;
 
-    if(!size_name){
-        throw new ApiError(400 , "Size is required")
+    if (!size_name) {
+        throw new ApiError(400, "Size is required")
     }
 
     const [rows] = await pool.query(`
         DELETE FROM product_sizes WHERE product_id = ? AND size_name = ?
     `, [product_id, size_name])
 
+    if(rows.affectedRows === 0){
+        throw new ApiError(404, "Size not found for this product");
+    }
+
     return res
-    .status(200)
-    .json(new ApiResponse(200, "Size deleted successfully"))
+        .status(200)
+        .json(new ApiResponse(200, "Size deleted successfully"))
 
 })
 
-export const setReviews = asyncHandler( async (req, res) => {
+export const setReviews = asyncHandler(async (req, res) => {
 
-    const { user_id } = req.user.id;
-    const { id:product_id } = req.params;
+    const user_id = req.user.id;
+    const { id: product_id } = req.params;
     const { rating, comment = null } = req.body;
     const finalComment = comment?.trim() || null;
 
-    if(!rating){
+    if (!rating) {
         throw new ApiError(401, "Rating is required")
     }
 
-    await pool.query(`
-        INSERT INTO reviews (user_id, product_id, rating, comment) VALUES( ?, ?, ?, ?) 
-    `,[user_id, product_id, rating, finalComment])
-
-    const [product] = await pool.query(`
-        SELECT COALESCE( AVG(rating), 0) AS average_rating,
-        COUNT(*) AS total_ratings
-        FROM reviews WHERE product_id
-    `, [product_id])
-
-    const average_rating = product.average_rating;
-    const total_rating = product.total_ratings;
-
-    await pool.query(`
-        UPDATE products SET ( rating, rating_count ) VALUES(?,?) WHERE id = ?
-    `, [average_rating,total_rating, product_id])
-
-    return res
-    .status(200)
-    .json( new ApiResponse( 200, "Comment posted successfully") )
-})
-
-export const updateReviews = asyncHandler( async (req, res) => {
-    const {user_id} = req.user.id;
-    const { product_id} = req.params;
-    const { upadated_rating, comment = null } = req.body;
-
-    const finalComment = comment?.trim() || null;
-
-    if(!updated_raing){
-        throw new ApiError(402, "Rating is required")
+    if (rating < 1 || rating > 5) {
+        throw new ApiError(400, "Rating must be between 1 and 5");
     }
-    
+
+    const connection = await pool.getConnection()
+
 
     try {
-        await connnection.query(`
-            UPDATE reviews SET (rating, comment) VALUES ( ?, ?) WHERE product_id = ? AND user_id = ?
-        `, [upadated_rating, finalComment, product_id, user_id])
+    
+        await connection.beginTransaction()
+    
+        const [result] = await connection.query(`
+            INSERT INTO reviews (user_id, product_id, rating, comment) VALUES( ?, ?, ?, ?) 
+        `, [user_id, product_id, rating, finalComment])
+        
+        if(result.affectedRows === 0){
+            throw new ApiError(401, "Fail to insert")
+        }
+
+        const [product] = await connection.query(`
+            SELECT COALESCE( AVG(rating), 0) AS average_rating,
+            COUNT(*) AS total_ratings
+            FROM reviews WHERE product_id
+        `, [product_id])
+        
+        const average_rating = product[0].average_rating;
+        const total_rating = product[0].total_ratings;
+        
+        await connection.query(`
+            UPDATE products SET rating =?, rating_count = ? WHERE id = ?
+        `, [average_rating, total_rating, product_id])
+        
+        await connection.commit();
+        
+        return res
+            .status(200)
+            .json(new ApiResponse(200, "Comment posted successfully"))
+            
     } catch (error) {
-        throw new ApiError(402, `Only the same user can update the review ${error.message}`)    
+        await connection.rollback();
+        if (error instanceof ApiError) throw error;
+        throw new ApiError(500, `Failed to insert review. ${error.message}`);
+    } finally {
+        connection.release()
     }
-    
-    const [product] = await connection.query(`
-        SELECT COALESCE( AVG(raing), 0) AS average_rating,
-        COUNT(*) AS total_rating FROM reviews WHERE product_id
-    `, [product_id])
-    
-    const average_rating = product.average_rating;
-    const total_rating = product.total_rating;
-    
-    await connection.query(`
-        UPDATE products SET (rating, rating_count) VALUES ( ?,?) WHERE id = ?
-    `, [average_rating, total_rating, product_id] )
 
-    return res
-    .status(200)
-    .json(new ApiResponse(200, "Review updated successfully"))
 })
 
-export const deleteReviews = asyncHandler( async( req, res) => {
-    const { user_id } = req.user.id;
+export const updateReviews = asyncHandler(async (req, res) => {
+  const user_id = req.user.id;
+  const { id:product_id } = req.params;
+  const { new_rating, comment = null } = req.body;
+
+  const finalComment = comment?.trim() || null;
+
+  if (!new_rating) {
+    throw new ApiError(400, "Rating is required");
+  }
+
+  if (new_rating < 1 || new_rating > 5) {
+    throw new ApiError(400, "Rating must be between 1 and 5");
+  }
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [updateResult] = await connection.query(
+      `UPDATE reviews SET rating = ?, comment = ? WHERE product_id = ? AND user_id = ?`,
+      [new_rating, finalComment, product_id, user_id]
+    );
+
+    if (updateResult.affectedRows === 0) {
+      throw new ApiError(404, "Review not found");
+    }
+
+    const [rows] = await connection.query(
+      `SELECT COALESCE(AVG(rating), 0) AS average_rating, COUNT(*) AS total_rating 
+       FROM reviews WHERE product_id = ?`,
+      [product_id]
+    );
+
+    const { average_rating, total_rating } = rows[0];
+
+    await connection.query(
+      `UPDATE products SET rating = ?, rating_count = ? WHERE id = ?`,
+      [average_rating, total_rating, product_id]
+    );
+
+    await connection.commit();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Review updated successfully"));
+  } catch (error) {
+    await connection.rollback();
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(500, `Failed to update review. ${error.message}`);
+  } finally {
+    connection.release();
+  }
+});
+
+export const deleteReviews = asyncHandler(async (req, res) => {
+
+    const user_id = req.user.id;
     const { id: product_id } = req.params;
-    
+
+    const connection = await pool.getConnection()
+
     try {
-        await pool.query(`
+
+        await connection.beginTransaction()
+        
+        
+        const [deleteResult] = await connection.query(`
             DELETE FROM reviews WHERE product_id = ? AND user_id = ?
         `, [product_id, user_id])
+
+        if (deleteResult.affectedRows === 0) {
+            throw new ApiError(404, "Review not found");
+        }
+    
+        const [product] = await connection.query(`
+            SELECT COALESCE( AVG(rating), 0) AS average_rating,
+            COUNT(*) AS total_rating FROM reviews WHERE product_id = ?
+        `, [product_id])
+    
+        const average_rating = product[0].average_rating;
+        const total_rating = product[0].total_rating;
+    
+        await connection.query(`
+            UPDATE products SET rating = ?, rating_count = ? WHERE id = ?
+        `, [average_rating, total_rating, product_id])
+    
+        await connection.commit()
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, "Review deleted successfully"))
+
     } catch (error) {
-        throw new ApiError(402, `Only the same user can delete the review ${error.message}`)
+
+        await connection.rollback();
+        if (error instanceof ApiError) throw error;
+        throw new ApiError(500, `Failed to delete review. ${error.message}`);
+        
+    } finally {
+        connection.release()
     }
+})
 
-    const [product] = await connection.query(`
-        SELECT COALESCE( AVG(raing), 0) AS average_rating,
-        COUNT(*) AS total_rating FROM reviews WHERE product_id
-    `, [product_id])
-    
-    const average_rating = product.average_rating;
-    const total_rating = product.total_rating;
-    
-    await connection.query(`
-        UPDATE products SET (rating, rating_count) VALUES ( ?,?) WHERE id = ?
-    `, [average_rating, total_rating, product_id] )
+//search & discovery
 
-    return res
-    .status(200)
-    .json(new ApiResponse(200, "Review deleted successfully"))    
+export const searchProduct = asyncHandler(async(req, res) => {
+    
 })

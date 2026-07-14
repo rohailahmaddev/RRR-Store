@@ -1,5 +1,7 @@
+import pool from "../db/index.db.js";
 import ApiError from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
+import jwt from "jsonwebtoken"
 
 export const verifyJWT = asyncHandler(async (req, res, next) => {
 
@@ -8,11 +10,11 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     if (!token) {
         throw new ApiError(401, "Unauthorized request.");
     }
-
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     } catch (error) {
+    
       if (error.name === "TokenExpiredError") {
         throw new ApiError(401, "Access token expired");
       }
