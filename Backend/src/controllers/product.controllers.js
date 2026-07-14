@@ -120,7 +120,7 @@ export const addProduct = asyncHandler(async (req, res) => {
 
 export const getProducts = asyncHandler(async (req, res) => {
 
-    const { page = 1, limit = 20, categoryId, min_price, max_price, sort_by } = req.query;
+    const { page = 1, limit = 20, search_name, categoryId, min_price, max_price, sort_by } = req.query;
     let query = `
     SELECT products.id, products.sku, products.name, products.description, products.price, products.rating,
     products.rating_count,
@@ -141,6 +141,11 @@ export const getProducts = asyncHandler(async (req, res) => {
     WHERE products.is_active = true 
     `
     const param = []
+
+    if (search_name) {
+        query += ` AND products.name LIKE ?`;
+        param.push(`%${search_name}%`);
+    }
 
     //filter by category
     if (categoryId) {
@@ -549,8 +554,22 @@ export const setReviews = asyncHandler(async (req, res) => {
             
     } catch (error) {
         await connection.rollback();
-        if (error instanceof ApiError) throw error;
-        throw new ApiError(500, `Failed to insert review. ${error.message}`);
+
+        if (error instanceof ApiError) {
+            throw error;
+        }
+
+        if (error.code === "ER_DUP_ENTRY") {
+            throw new ApiError(
+                409,
+                "You have already submitted a review for this product"
+            );
+        }
+
+        throw new ApiError(
+            500,
+            `Failed to insert review. ${error.message}`
+        );
     } finally {
         connection.release()
     }
@@ -661,8 +680,222 @@ export const deleteReviews = asyncHandler(async (req, res) => {
     }
 })
 
+export const createCategory = asyncHandler(async (req, res) => {
+    const { name:category_name } = req.body;
+
+    if (!category_name?.trim()) {
+        throw new ApiError(400, "Category name is required");
+    }
+
+    const name = category_name.trim();
+
+    const slug = name
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+
+    const [result] = await pool.query(
+        `
+        INSERT INTO categories (name, slug)
+        VALUES (?, ?)
+        `,
+        [name, slug]
+    );
+
+    if (result.affectedRows === 0) {
+        throw new ApiError(500, "Failed to create category");
+    }
+
+    return res.status(201).json(
+        new ApiResponse(
+            201,
+            "Category created successfully",
+            {
+                id: result.insertId,
+                name,
+                slug
+            }
+        )
+    );
+});
+
+export const getAllCategories = asyncHandler(async (req, res) => {
+    const [categories] = await pool.query(`
+        SELECT id, name, slug
+        FROM categories
+        ORDER BY name ASC
+    `);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Categories fetched successfully",
+                categories
+            )
+        );
+});
+
+export const updateCategory = asyncHandler(async (req, res) => {
+    const { id: categoryId } = req.params;
+    const { name:category_name } = req.body;
+
+    if (!category_name?.trim()) {
+        throw new ApiError(400, "Category name is required");
+    }
+
+    const name = category_name.trim();
+
+    const slug = name
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+
+    const [result] = await pool.query(
+        `
+        UPDATE categories
+        SET name = ?, slug = ?
+        WHERE id = ?
+        `,
+        [name, slug, categoryId]
+    );
+
+    if (result.affectedRows === 0) {
+        throw new ApiError(404, "Category not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Category updated successfully",
+            {
+                id: categoryId,
+                name,
+                slug
+            }
+        )
+    );
+});
+
+export const deleteCategory = asyncHandler(async (req, res) => {
+    const { id: categoryId } = req.params;
+
+    const [result] = await pool.query(
+        `
+        DELETE FROM categories
+        WHERE id = ?
+        `,
+        [categoryId]
+    );
+
+    if (result.affectedRows === 0) {
+        throw new ApiError(404, "Category not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Category deleted successfully",
+            null
+        )
+    );
+});
 //search & discovery
 
-export const searchProduct = asyncHandler(async(req, res) => {
-    
-})
+// export const searchProduct = asyncHandler(async(req, res) => {
+//     const { page = 1, limit = 10, search_name, categoryId, max_price, min_price, rating } = req.query;
+
+//     let query = `
+//         SELECT p.name,p.sku, p.price, p.rating, p.rating_count,
+//         c.name AS categroy_name,
+
+//         (
+//             SELECT pi.image_url
+//             FROM product_image pi
+//             WHERE pi.poduct_id = p.id AND is_primary = true
+//             LIMIT 1
+//         ) AS image_url
+
+//         FROM products p
+//         LEFT JOIN categories c 
+//         ON p.category_id = c.id  
+//         WHERE p.is_active = true
+//     `
+
+//     const param = []
+
+//     //filter by product name
+//     if(search_name){
+//         query += `AND p.name = ?`
+//         param.push(search_name)
+//     }
+//     //filter by category
+//     if (categoryId) {
+//         query += ` AND category_id = ?`
+//         param.push(categoryId)
+//     }
+
+//     //filter by min_price
+//     if (min_price) {
+//         query += ` AND price >= ?`
+//         param.push(min_price)
+//     }
+
+//     //filter by max_price
+//     if (max_price) {
+//         query += ` AND price <= ?`
+//         param.push(max_price)
+//     }
+
+//     const sortMap = {
+//         price_asc: "price ASC",
+//         price_desc: "price DESC",
+//         newest: "created_at DESC",
+//         rating: "rating DESC",
+//     };
+
+//     query += ` ORDER BY ${sortMap[sort_by] || "products.created_at DESC"}`
+//     const offset = (Number(page) - 1) * Number(limit)
+
+//     query += ` LIMIT ? OFFSET ? `
+//     param.push(Number(limit), offset)
+
+//     const [products] = await pool.query(query, param)
+
+//     let count_query = `SELECT COUNT(*) AS total FROM products WHERE is_active = true `
+//     const count_param = []
+
+//     if (categoryId) {
+//         count_query += `AND category_id = ?`
+//         count_param.push(categoryId)
+//     }
+
+//     //count by min_price
+//     if (min_price) {
+//         count_query += `AND price >= ?`
+//         count_param.push(min_price)
+//     }
+
+//     //filter by max_price
+//     if (max_price) {
+//         count_query += `AND price <= ?`
+//         count_param.push(max_price)
+//     }
+
+//     const [count_result] = await pool.query(count_query, count_param)
+//     const total_products = count_result[0].total
+
+//     return res
+//         .status(200)
+//         .json(new ApiResponse(200, "Products fetched successfully", {
+//             products,
+//             pagination: {
+//                 currentPage: Number(page),
+//                 totalPages: Math.ceil(total_products / limit),
+//                 total_products,
+//                 limit: Number(limit),
+//             },
+//         }))
+
+// })
