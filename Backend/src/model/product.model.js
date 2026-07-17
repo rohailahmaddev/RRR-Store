@@ -57,7 +57,7 @@ export const createProductTable = async () => {
         FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
         INDEX idx_images_product (product_id)
     )
-  `);
+  `);   
 
   // Sizess
   await pool.query(`
