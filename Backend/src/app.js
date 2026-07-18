@@ -15,6 +15,8 @@ app.use(
     })
 );
 
+//compression
+app.use(compression());
 
 // other configurations
 app.use(express.json({limit:"16kb"}));
@@ -24,16 +26,19 @@ app.use(express.static("public"));
 //cookies parser
 app.use(cookieParser());
 
-app.use(compression());
 
 import authRoutes from "./routes/auth.routes.js";
 import productRoutes from "./routes/product.routes.js"
+import cartRoutes from "./routes/cart.routes.js"
 
 //auth route
 app.use("/api/user", authRoutes);
 
 //product route
 app.use("/api",productRoutes)
+
+//cart route
+app.use("/api",cartRoutes)
 
 app.use((req, res, next) => {
   next(new ApiError(404, `Route not found: ${req.originalUrl}`));
