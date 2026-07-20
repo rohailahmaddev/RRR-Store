@@ -92,3 +92,16 @@ export const uploadImagesOnCloudinary = async (filesLocalPath = []) => {
   return upload
 
 }
+
+export const getCartSubtotal = async (connection, cartId) => {
+  const [result] = await connection.query(
+    `SELECT
+      COALESCE(SUM(ci.quantity * p.price), 0) AS subtotal,
+      COALESCE(SUM(ci.quantity), 0) AS totalItems
+     FROM cart_items ci
+     JOIN products p ON ci.product_id = p.id
+     WHERE ci.cart_id = ?`,
+    [cartId]
+  );
+  return { subtotal: result[0].subtotal, totalItems: result[0].totalItems };
+}

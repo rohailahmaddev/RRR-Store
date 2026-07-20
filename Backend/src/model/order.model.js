@@ -19,7 +19,7 @@ export const createOrderTable = async () => {
         status            ENUM('pending', 'confirmed', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
         payment_status    ENUM('unpaid', 'paid', 'refunded') DEFAULT 'unpaid',
         payment_method    ENUM('cod', 'stripe', 'paypal', 'jazzcash', 'easypaisa') NOT NULL,
-
+        
         subtotal          DECIMAL(10, 2) NOT NULL,
         discount          DECIMAL(10, 2) DEFAULT 0.00,
         tax               DECIMAL(10, 2) DEFAULT 0.00,

@@ -2,6 +2,7 @@ import pool from "../db/index.db.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
+import { getCartSubtotal } from "../utils/helper.js";
 
 export const addToCart = asyncHandler(async (req, res) => {
     const userId = req.user.id;
@@ -23,7 +24,7 @@ export const addToCart = asyncHandler(async (req, res) => {
     const connection = await pool.getConnection()
     try {
 
-        await connection.beginTransaction();
+        await connection.beginTransaction(); 
 
         //find and create cart
         const [cartRows] = await connection.query(`SELECT id FROM cart WHERE user_id = ?`, [userId])
@@ -39,16 +40,16 @@ export const addToCart = asyncHandler(async (req, res) => {
         }
 
 
-        const [result] = await connection.query(`
-           UPDATE product_size
-           SET stock = stock - ?
-           WHERE id = ?
-           AND stock >= ?
-           `,[quantity, sizeId, quantity]);
+        // const [result] = await connection.query(`
+        //    UPDATE product_size
+        //    SET stock = stock - ?
+        //    WHERE id = ?
+        //    AND stock >= ?
+        //    `,[quantity, sizeId, quantity]);
 
-        if (result.affectedRows === 0) {
-            throw new ApiError(400, "Insufficient stock.");
-        }
+        // if (result.affectedRows === 0) {
+        //     throw new ApiError(400, "Insufficient stock.");
+        // }
 
         await connection.query(`
             INSERT INTO cart_items ( cart_id, product_id, size_id, quantity ) 
@@ -127,7 +128,7 @@ export const getCart = asyncHandler(async (req, res) => {
 
     return res.status(200).json(
         new ApiResponse(200, "Cart items", {
-            items: [items],
+            items: items,
             subtotal: subtotal,
             totalItems: totalItem,
         })
@@ -146,7 +147,7 @@ export const removeCartItem = asyncHandler(async (req, res) => {
 
         // Get user's cart
         const [cart] = await connection.query(
-            `SELECT id FROM carts WHERE user_id = ?`,
+            `SELECT id FROM cart WHERE user_id = ?`,
             [userId]
         );
 
@@ -165,10 +166,12 @@ export const removeCartItem = asyncHandler(async (req, res) => {
             throw new ApiError(404, "Cart item not found.");
         }
 
+        const { subtotal, totalItems } = await getCartSubtotal(connection, cart[0].id);
+
         await connection.commit();
 
         return res.status(200).json(
-            new ApiResponse(200, null, "Item removed from cart successfully.")
+            new ApiResponse(200, "Item removed from cart successfully.", { subtotal, totalItems })
         );
     } catch (error) {
         await connection.rollback();
@@ -180,53 +183,74 @@ export const removeCartItem = asyncHandler(async (req, res) => {
 });
 
 export const updateCartItemQuantity = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { cartItemId } = req.params;
+  const { operation } = req.body;
 
-    const userId = req.user.id;
-    const { cartItemId } = req.params;
-    const { operation } = req.body;
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
 
-    const [items] = await pool.query(
-            `SELECT
-                ci.quantity,
-                ps.stock
-             FROM cart_items ci
-             JOIN carts c ON ci.cart_id = c.id
-             JOIN product_size ps ON ci.size_id = ps.id
-             WHERE ci.id = ? AND c.user_id = ?`,
-            [cartItemId, userId]
-    );  
-    if (items.length === 0) {
-        throw new ApiError(404, "Cart item not found.");
-    }   
-    const item = items[0];  
-    if (operation === "increment") {
-            if (item.quantity >= item.stock) {
-                throw new ApiError(400, "No more stock available.");
-            }
-
-            await pool.query(
-                `UPDATE cart_items
-                 SET quantity = quantity + 1
-                 WHERE id = ?`,
-                [cartItemId]
-            );
-    } else if (operation === "decrement") {
-            if (item.quantity <= 1) {
-                throw new ApiError(400, "Quantity cannot be less than 1.");
-            }
-
-            await pool.query(
-                `UPDATE cart_items
-                 SET quantity = quantity - 1
-                 WHERE id = ?`,
-                [cartItemId]
-            );
-    } else {
-            throw new ApiError(400, "Invalid operation.");
-    }
-
-    return res.status(200).json(
-            new ApiResponse(200, null, "Quantity updated successfully.")
+    const [items] = await connection.query(
+      `SELECT ci.cart_id, ci.quantity, ps.stock
+       FROM cart_items ci
+       JOIN cart c ON ci.cart_id = c.id
+       JOIN product_sizes ps ON ci.size_id = ps.id
+       WHERE ci.id = ? AND c.user_id = ?`,
+      [cartItemId, userId]
     );
 
+    if (items.length === 0) {
+      throw new ApiError(404, "Cart item not found.");
+    }
+
+    const item = items[0];
+
+    if (operation === "increment") {
+      if (item.quantity >= item.stock) {
+        throw new ApiError(400, "No more stock available.");
+      }
+    } else if (operation === "decrement") {
+      if (item.quantity <= 1) {
+        throw new ApiError(400, "Quantity cannot be less than 1.");
+      }
+    } else {
+      throw new ApiError(400, "Invalid operation.");
+    }
+
+    const { subtotal, totalItems } = await getCartSubtotal(connection, item.cart_id);
+
+    await connection.commit();
+
+    return res.status(200).json(
+      new ApiResponse(200, "Quantity updated successfully.", { subtotal, totalItems })
+    );
+  } catch (error) {
+    await connection.rollback();
+    throw error instanceof ApiError ? error : new ApiError(500, error.message);
+  } finally {
+    connection.release();
+  }
 });
+
+export const clearCart = asyncHandler(async(req, res) => {
+    const userId = req.user.id;
+
+    const [cart] = await pool.query(`
+        SELECT id FROM cart WHERE user_id = ?
+        `,[userId])
+    
+    if(cart.length === 0){
+       return res.status(200).json(new ApiResponse(200, "Cart is already empty"));
+    }
+
+    const cart_id = cart[0].id;
+
+    const [deletedRows] = await pool.query(`
+        DELETE FROM cart_items WHERE cart_id =?
+    `,[cart_id])
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, "Cart cleared successfully"))
+})
