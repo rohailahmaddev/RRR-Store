@@ -6,35 +6,41 @@ import { verifyJWT } from "../middlewares/auth.middleware.js"
 
 const router = Router()
 
-router.route("/add-product").post(
-    upload.fields([{ 
-        name: "images", 
-        maxCount: 4
-    }]), addProduct)
+// Static routes first
+router.route("/products/inactive").get(verifyJWT, isAdmin, getDeactivatedProductListing);
 
-router.route("/products").get(getProducts)
-router.route("/single-product/:id").get(getSingleProduct)
-router.route("/deactivate-product/:id").patch(deactivateProductListing)
-router.route("/activate-product/:id").patch(activateProductListing)
-router.route("/deactived-products").get(getDeactivatedProductListing)
-router.route("/update-product/:id").patch(
-    upload.fields([{ 
-        name: "images", 
-        maxCount: 4
-    }]),
-    updateProductListing)
-router.route("/delete-size/:id").delete(deleteProductSize)
+// Core product CRUD
+router.route("/products")
+  .post(verifyJWT, isAdmin, upload.fields([{ name: "images", maxCount: 4 }]), addProduct)
+  .get(getProducts);
 
-//product reviews route
-router.route("/product/review/:id").post(verifyJWT,setReviews)
-router.route("/product/review-update/:id").patch(verifyJWT, updateReviews)
-router.route("/product/review-delete/:id").delete(verifyJWT, deleteReviews)
+router.route("/products/:id")
+  .get(getSingleProduct)
+  .patch(verifyJWT, isAdmin, upload.fields([{ name: "images", maxCount: 4 }]), updateProductListing);
 
+router.route("/products/:id/activate").patch(verifyJWT, isAdmin, activateProductListing);
+router.route("/products/:id/deactivate").patch(verifyJWT, isAdmin, deactivateProductListing);
 
-//product category route
-router.route("/create-category").post(createCategory)
-router.route("/categories").get(getAllCategories)
-router.route("/update-category/:id").patch(updateCategory)
-router.route("/delete-category/:id").delete(deleteCategory)
+// Sizes (nested under product)
+router.route("/products/:productId/sizes")
+  .post(verifyJWT, isAdmin, addProductSize);
+router.route("/products/:productId/sizes/:sizeId")
+  .patch(verifyJWT, isAdmin, updateProductSize)
+  .delete(verifyJWT, isAdmin, deleteProductSize);
+
+// Reviews
+router.route("/products/:id/reviews")
+  .post(verifyJWT, setReviews)
+  .patch(verifyJWT, updateReviews)
+  .delete(verifyJWT, deleteReviews);
+
+// Categories
+router.route("/categories")
+  .post(verifyJWT, isAdmin, createCategory)
+  .get(getAllCategories);
+
+router.route("/categories/:id")
+  .patch(verifyJWT, isAdmin, updateCategory)
+  .delete(verifyJWT, isAdmin, deleteCategory);
 
 export default router;

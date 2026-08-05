@@ -93,7 +93,7 @@ export const getCart = asyncHandler(async (req, res) => {
 
     const [items] = await pool.query(`
         SELECT 
-        ci.id AS cart_id,
+        ci.id AS cart_item_id,
         ci.product_id,
         ci.quantity,
         ci.size_id,
@@ -138,8 +138,8 @@ export const getCart = asyncHandler(async (req, res) => {
 
 export const removeCartItem = asyncHandler(async (req, res) => {
     const userId = req.user.id;
-    const { cartItemId } = req.params;
-
+    const { id:cartItemId } = req.params;
+    
     const connection = await pool.getConnection();
 
     try {
@@ -184,7 +184,7 @@ export const removeCartItem = asyncHandler(async (req, res) => {
 
 export const updateCartItemQuantity = asyncHandler(async (req, res) => {
   const userId = req.user.id;
-  const { cartItemId } = req.params;
+  const { id:cartItemId } = req.params;
   const { operation } = req.body;
 
   const connection = await pool.getConnection();
@@ -205,19 +205,34 @@ export const updateCartItemQuantity = asyncHandler(async (req, res) => {
     }
 
     const item = items[0];
-
+ 
+    let result
     if (operation === "increment") {
       if (item.quantity >= item.stock) {
         throw new ApiError(400, "No more stock available.");
       }
+
+      result = await connection.query(`UPDATE cart_items 
+            SET quantity = quantity + 1 
+            WHERE id = ? AND cart_id = ?`,[cartItemId, item.cart_id])
+
     } else if (operation === "decrement") {
       if (item.quantity <= 1) {
         throw new ApiError(400, "Quantity cannot be less than 1.");
       }
+
+      result = await connection.query(`UPDATE cart_items 
+            SET quantity = quantity - 1 
+            WHERE id = ? AND cart_id = ?`,[cartItemId, item.cart_id])
+
     } else {
       throw new ApiError(400, "Invalid operation.");
     }
 
+    if(result.affectedRows === 0){
+        throw new ApiError(500, "Failed to update quantity.")
+    }
+    
     const { subtotal, totalItems } = await getCartSubtotal(connection, item.cart_id);
 
     await connection.commit();

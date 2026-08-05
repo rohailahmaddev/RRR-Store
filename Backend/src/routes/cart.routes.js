@@ -6,8 +6,8 @@ const router = Router()
 
 router.route("/add-to-cart").post(verifyJWT, addToCart)
 router.route("/cart-items").get(verifyJWT, getCart)
-router.route("/delete-cart-item").delete(verifyJWT, removeCartItem)
-router.route("/cart-quantity-update").patch(verifyJWT, updateCartItemQuantity)
-router.route("cart-cleared").delete(verifyJWT,clearCart)
+router.route("/delete-cart-item/:id").delete(verifyJWT, removeCartItem)
+router.route("/cart-quantity-update/:id").patch(verifyJWT, updateCartItemQuantity)
+router.route("/cart-cleared").delete(verifyJWT,clearCart)
 
 export default router;

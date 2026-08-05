@@ -7,21 +7,19 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = Router();
 
 router.route("/register").post(
-    upload.fields([
-        {
-            name:"avatar_url",
-            maxCount:1
-        }
-    ]) , registerUser)
+  upload.fields([{ name: "avatar_url", maxCount: 1 }]),
+  registerUser
+);
 
-router.route("/verify-email/:token").get(verifyEmail)
-router.route("/resend-verification-email").post(resendVerificationEmail)
-router.route("/login").post(loginUser)
-router.route("/logout").post(verifyJWT,logoutUser)
-router.route("/refresh-token").post(refreshToken)
-router.route("/forgot-password").post(forgotPassword)
-router.route("/reset-password/:token").post(resetPassword)
-router.route("/deactivate-user/:userId").put(verifyJWT, isAdmin, deactivateUser)
-router.route("/activate-user/:userId").put(verifyJWT, isAdmin, activateUser)
+router.route("/verify-email/:token").get(verifyEmail);
+router.route("/resend-verification-email").post(resendVerificationEmail);
+router.route("/login").post(loginUser);
+router.route("/logout").post(verifyJWT, logoutUser);
+router.route("/refresh-token").post(refreshToken);
+router.route("/forgot-password").post(forgotPassword);
+router.route("/reset-password/:token").post(resetPassword);
+
+router.route("/:userId/deactivate").patch(verifyJWT, isAdmin, deactivateUser);
+router.route("/:userId/activate").patch(verifyJWT, isAdmin, activateUser);
 
 export default router;
