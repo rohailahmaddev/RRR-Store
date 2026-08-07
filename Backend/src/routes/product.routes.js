@@ -1,5 +1,5 @@
 import Router from "router"
-import { activateProductListing, addProduct, createCategory, deactivateProductListing, deleteCategory, deleteProductSize, deleteReviews, getAllCategories, getDeactivatedProductListing, getProducts, getSingleProduct, setReviews, updateCategory, updateProductListing, updateReviews } from "../controllers/product.controllers.js"
+import { activateProductListing, addProduct, addProductVariant, createCategory, deactivateProductListing, deleteCategory, deleteProductVariant, deleteReviews, getAllCategories, getDeactivatedProductListing, getProducts, getSingleProduct, setReviews, updateCategory, updateProductListing, updateProductVariant, updateReviews } from "../controllers/product.controllers.js"
 import upload from "../middlewares/multer.middleware.js"
 import { isAdmin } from "../middlewares/isAdmin.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js"
@@ -23,10 +23,10 @@ router.route("/products/:id/deactivate").patch(verifyJWT, isAdmin, deactivatePro
 
 // Sizes (nested under product)
 router.route("/products/:productId/sizes")
-  .post(verifyJWT, isAdmin, addProductSize);
+  .post(verifyJWT, isAdmin, addProductVariant);
 router.route("/products/:productId/sizes/:sizeId")
-  .patch(verifyJWT, isAdmin, updateProductSize)
-  .delete(verifyJWT, isAdmin, deleteProductSize);
+  .patch(verifyJWT, isAdmin, updateProductVariant)
+  .delete(verifyJWT, isAdmin, deleteProductVariant);
 
 // Reviews
 router.route("/products/:id/reviews")

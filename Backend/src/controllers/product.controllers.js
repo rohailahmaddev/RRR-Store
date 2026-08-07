@@ -36,17 +36,19 @@ const insertCategories = async (connection, category_name) => {
     return categoryId
 }
 
+//admin controller
 export const addProduct = asyncHandler(async (req, res) => {
 
     const { product_name, description, price, category_name, sku } = req.body;
-    const product_sizes = JSON.parse(req.body.product_sizes);
+    const product_variants = JSON.parse(req.body.product_variants || "[]");
+    // const product_colors = JSON.parse(req.body.product_colors);
 
     if (!product_name || !description || !price || !category_name || !sku) {
         throw new ApiError(402, "All fields required");
     }
 
-    if (!Array.isArray(product_sizes) || product_sizes.length === 0) {
-        throw new ApiError(400, "At least one product size is required");
+    if (!Array.isArray(product_variants) || product_variants.length === 0) {
+        throw new ApiError(400, "At least one product variant i.e size and color is required");
     }
 
     const imageLocalPaths = req.files?.images?.map((file) => file.path) || [];
@@ -84,11 +86,11 @@ export const addProduct = asyncHandler(async (req, res) => {
             );
         }
 
-        //insert product sizes
-        for (const size of product_sizes) {
+        //insert product variants
+        for (const variant of product_variants) {
             await connection.query(
-                `INSERT INTO product_sizes (product_id, size_name, stock) VALUES(?,?,?)`,
-                [insertedProductId, size.size_name, size.stock]
+                `INSERT INTO product_variants (product_id, size_name, color, stock) VALUES(?,?,?,?)`,
+                [insertedProductId, variant.size_name, variant.color, variant.stock]
             )
         }
 
@@ -117,6 +119,7 @@ export const addProduct = asyncHandler(async (req, res) => {
     }
 
 })
+
 
 export const getProducts = asyncHandler(async (req, res) => {
 
@@ -229,13 +232,13 @@ export const getSingleProduct = asyncHandler(async (req, res) => {
             '[', 
             GROUP_CONCAT(
                 JSON_OBJECT(
-                    'size_name', ps.size_name, 'stock', ps.stock)
+                    'size_name', pv.size_name,'color', pv.color, 'stock', pv.stock)
             ), 
             ']'
             )
-            FROM product_sizes ps
-            WHERE ps.product_id = products.id
-        ) AS sizes,
+            FROM product_variants pv
+            WHERE pv.product_id = products.id
+        ) AS product_variants,
 
         (SELECT CONCAT(
             '[',
@@ -286,7 +289,7 @@ export const getSingleProduct = asyncHandler(async (req, res) => {
 
     const product = rows[0]
 
-    product.sizes = product.sizes ? JSON.parse(product.sizes) : [];
+    product.product_variants = product.product_variants ? JSON.parse(product.product_variants) : [];
     product.images = product.images ? JSON.parse(product.images) : [];
 
     return res
@@ -372,7 +375,6 @@ export const updateProductListing = asyncHandler(async (req, res) => {
 
     const { id: product_id } = req.params;
 
-    console.log(req.body)
     const { product_name, description, price, category_name, sku } = req.body;
 
     const [rows] = await pool.query(`
@@ -390,7 +392,7 @@ export const updateProductListing = asyncHandler(async (req, res) => {
     if (description !== undefined) fieldToUpdate.description = description;
     if (price !== undefined) fieldToUpdate.price = price;
 
-    const product_sizes = req.body.product_sizes ? JSON.parse(req.body.product_sizes) : null;
+    const product_variants = req.body.product_variants ? JSON.parse(req.body.product_variants) : null;
     const deletedImageIds = req.body.deleted_image_ids ? JSON.parse(req.body.deleted_image_ids) : [];
 
     const imageLocalPaths = req.files?.images?.map((file) => file.path) || [];
@@ -443,14 +445,14 @@ export const updateProductListing = asyncHandler(async (req, res) => {
             }
         }
 
-        // Replace sizes, if provided
-        if (product_sizes && Array.isArray(product_sizes)) {
-            for (const size of product_sizes) {
+        // Replace variants, if provided
+        if (product_variants && Array.isArray(product_variants)) {
+            for (const variant of product_variants) {
                 await connection.query(
-                    `INSERT INTO product_sizes (product_id, size_name, stock) 
-               VALUES (?, ?, ?) 
-               ON DUPLICATE KEY UPDATE stock = VALUES(stock)`,
-                    [product_id, size.size_name, size.stock]
+                    `INSERT INTO product_variants (product_id, size_name, color, stock) 
+                    VALUES (?, ?, ?, ?) 
+                    ON DUPLICATE KEY UPDATE stock = VALUES(stock)`,
+                    [product_id, variant.size_name, variant.color, variant.stock]
                 );
             }
         }
@@ -477,29 +479,6 @@ export const updateProductListing = asyncHandler(async (req, res) => {
     } finally {
         connection.release();
     }
-
-})
-
-export const deleteProductSize = asyncHandler(async (req, res) => {
-
-    const { id: product_id } = req.params;
-    const { size_name } = req.body;
-
-    if (!size_name) {
-        throw new ApiError(400, "Size is required")
-    }
-
-    const [rows] = await pool.query(`
-        DELETE FROM product_sizes WHERE product_id = ? AND size_name = ?
-    `, [product_id, size_name])
-
-    if(rows.affectedRows === 0){
-        throw new ApiError(404, "Size not found for this product");
-    }
-
-    return res
-        .status(200)
-        .json(new ApiResponse(200, "Size deleted successfully"))
 
 })
 
@@ -801,8 +780,100 @@ export const deleteCategory = asyncHandler(async (req, res) => {
         )
     );
 });
-//search & discovery
 
+export const updateProductVariant = asyncHandler(async (req, res) => {
+    const { id: product_id } = req.params;
+    const { size_name, color, stock } = req.body;
+
+    if (!size_name || !color || stock === undefined) {
+        throw new ApiError(400, "Size name, color, and stock are required");
+    }
+
+    const [result] = await pool.query(
+        `UPDATE product_variants
+        SET size_name = ?, color = ?, stock = ?
+        WHERE product_id = ? AND size_name = ? AND color = ?
+        `,
+        [size_name, color, stock, product_id, size_name, color]
+    );
+
+    if (result.affectedRows === 0) {
+        throw new ApiError(404, "Product variant not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Product variant updated successfully",
+            {
+                product_id,
+                size_name,
+                color,
+                stock
+            }
+        )
+    );
+});
+
+export const deleteProductVariant = asyncHandler(async (req, res) => {
+    const { id: product_id } = req.params;
+    const { size_name, color } = req.body;
+
+    if (!size_name || !color) {
+        throw new ApiError(400, "Size name and color are required");
+    }       
+
+    const [result] = await pool.query(
+        `DELETE FROM product_variants
+        WHERE product_id = ? AND size_name = ? AND color = ?
+        `,
+        [product_id, size_name, color]
+    );
+    
+    if (result.affectedRows === 0) {
+        throw new ApiError(404, "Product variant not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(
+            200, "Product variant deleted successfully",
+            {
+                product_id,
+                size_name,
+                color
+            }
+        )
+    );
+});
+
+export const addProductVariant = asyncHandler(async (req, res) => {
+    const { id: product_id } = req.params;
+    const { size_name, color, stock } = req.body;
+
+    if (!size_name || !color || stock === undefined) {
+        throw new ApiError(400, "Size name, color, and stock are required");
+    }   
+
+    const [result] = await pool.query(
+        `INSERT INTO product_variants (product_id,size_name, color, stock)
+        VALUES (?, ?, ?, ?)
+        `,
+        [product_id, size_name, color, stock]
+    );
+    
+    if (result.affectedRows === 0) {
+        throw new ApiError(500, "Failed to add product variant");
+    }
+
+    return res.status(201).json(
+        new ApiResponse(
+            201, "Product variant added successfully",  
+        )
+    );  
+});
+
+
+//search & discovery
 // export const searchProduct = asyncHandler(async(req, res) => {
 //     const { page = 1, limit = 10, search_name, categoryId, max_price, min_price, rating } = req.query;
 
@@ -897,5 +968,4 @@ export const deleteCategory = asyncHandler(async (req, res) => {
 //                 limit: Number(limit),
 //             },
 //         }))
-
 // })

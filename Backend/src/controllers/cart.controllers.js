@@ -6,18 +6,18 @@ import { getCartSubtotal } from "../utils/helper.js";
 
 export const addToCart = asyncHandler(async (req, res) => {
     const userId = req.user.id;
-    const { product_id: productId, size_id: sizeId, quantity = 1 } = req.body;
+    const { product_id: productId, product_variant_id: productVariantId, color, quantity = 1 } = req.body;
 
     //validate size stock
-    const [sizeRows] = await pool.query(`
-        SELECT stock FROM product_sizes WHERE product_id = ? AND id = ?
-        `, [productId, sizeId])
+    const [product_variant_Rows] = await pool.query(`
+        SELECT stock FROM product_variants WHERE product_id = ? AND id = ? AND color = ?
+        `, [productId, productVariantId, color]);
 
-    if (sizeRows.length === 0) {
+    if (product_variant_Rows.length === 0) {
         throw new ApiError(404, "Product size not found");
     }
 
-    if (sizeRows[0].stock < quantity) {
+    if (product_variant_Rows[0].stock < quantity) {
         throw new ApiError(400, "Insufficient stock");
     }
 
@@ -52,10 +52,10 @@ export const addToCart = asyncHandler(async (req, res) => {
         // }
 
         await connection.query(`
-            INSERT INTO cart_items ( cart_id, product_id, size_id, quantity ) 
+            INSERT INTO cart_items ( cart_id, product_id, product_variant_id, quantity ) 
             VALUES( ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE quantity = quantity + ?
-            `, [cart_id, productId, sizeId, quantity, quantity])
+            `, [cart_id, productId, productVariantId, quantity, quantity])
 
         await connection.commit();
 
@@ -96,11 +96,11 @@ export const getCart = asyncHandler(async (req, res) => {
         ci.id AS cart_item_id,
         ci.product_id,
         ci.quantity,
-        ci.size_id,
+        ci.product_variant_id,
         p.name, 
         p.sku, 
         p.price,
-        ps.size_name,
+        pv.size_name,
         ( SELECT pi.image_url FROM product_images pi
          WHERE pi.product_id = p.id AND pi.is_primary = true
          limit 1        
@@ -108,8 +108,8 @@ export const getCart = asyncHandler(async (req, res) => {
         From cart_items ci 
         INNER JOIN products p
         ON ci.product_id = p.id
-        LEFT JOIN product_sizes ps
-        ON ps.id = ci.size_id
+        LEFT JOIN product_variants pv
+        ON pv.id = ci.product_variant_id
         WHERE p.is_active = true AND ci.cart_id = ?
         `, [card_id])
 
@@ -192,10 +192,10 @@ export const updateCartItemQuantity = asyncHandler(async (req, res) => {
     await connection.beginTransaction();
 
     const [items] = await connection.query(
-      `SELECT ci.cart_id, ci.quantity, ps.stock
+      `SELECT ci.cart_id, ci.quantity, pv.stock
        FROM cart_items ci
        JOIN cart c ON ci.cart_id = c.id
-       JOIN product_sizes ps ON ci.size_id = ps.id
+       JOIN product_variants pv ON ci.product_variant_id = pv.id
        WHERE ci.id = ? AND c.user_id = ?`,
       [cartItemId, userId]
     );

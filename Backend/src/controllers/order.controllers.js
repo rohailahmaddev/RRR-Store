@@ -41,11 +41,11 @@ export const createOrder = asyncHandler( async(req, res) => {
         await connection.beginTransaction();
 
         const [cartItems] = await connection.query(
-          `SELECT ci.product_id, ci.size_id, ci.quantity, p.price, p.name,
-                  ps.stock AS available_stock
+          `SELECT ci.product_id, ci.product_variant_id, ci.quantity, p.price, p.name,
+                  pv.stock AS available_stock
            FROM cart_items ci
            JOIN products p ON p.id = ci.product_id
-           LEFT JOIN product_sizes ps ON ps.id = ci.size_id
+           LEFT JOIN product_variants pv ON pv.id = ci.product_variant_id
            WHERE ci.cart_id = ?
            FOR UPDATE`,
           [cartId]
@@ -90,15 +90,15 @@ export const createOrder = asyncHandler( async(req, res) => {
         // Create order_items (price snapshot) + decrement stock
         for (const item of cartItems) {
           await connection.query(
-            `INSERT INTO order_items (order_id, product_id, size_id, quantity, price)
+            `INSERT INTO order_items (order_id, product_id, product_variant_id, quantity, price)
              VALUES (?, ?, ?, ?, ?)`,
-            [orderId, item.product_id, item.size_id, item.quantity, item.price]
+            [orderId, item.product_id, item.product_variant_id, item.quantity, item.price]
           );
 
-          if (item.size_id) {
+          if (item.product_variant_id) {
             await connection.query(
-              `UPDATE product_sizes SET stock = stock - ? WHERE id = ?`,
-              [item.quantity, item.size_id]
+              `UPDATE product_variants SET stock = stock - ? WHERE id = ?`,
+              [item.quantity, item.product_variant_id]
             );
           }
         }
@@ -176,7 +176,7 @@ export const getMyOrderById = asyncHandler( async (req, res) => {
                   'name', p.name,
                   'quantity', oi.quantity,
                   'price', oi.price,
-                  'size_id', oi.size_id,
+                  'product_variant_id', oi.product_variant_id,
                   'image_url', (
                     SELECT pi.image_url
                     FROM product_images pi
@@ -236,15 +236,15 @@ export const cancleMyOrder = asyncHandler( async(req, res) => {
 
     // Restore stock for each item in this order
     const [orderItems] = await connection.query(
-      `SELECT product_id, size_id, quantity FROM order_items WHERE order_id = ?`,
+      `SELECT product_id, product_variant_id, quantity FROM order_items WHERE order_id = ?`,
       [order_id]
     );
 
     for (const item of orderItems) {
-      if (item.size_id) {
+      if (item.product_variant_id) {
         await connection.query(
-          `UPDATE product_sizes SET stock = stock + ? WHERE id = ?`,
-          [item.quantity, item.size_id]
+          `UPDATE product_variants SET stock = stock + ? WHERE id = ?`,
+          [item.quantity, item.product_variant_id]
         );
       }
     }
@@ -363,7 +363,7 @@ export const getOrderById = asyncHandler( async (req, res) => {
                   'name', p.name,
                   'quantity', oi.quantity,
                   'price', oi.price,
-                  'size_id', oi.size_id,
+                  'product_variant_id', oi.product_variant_id,
                   'image_url', (
                     SELECT pi.image_url
                     FROM product_images pi
@@ -449,15 +449,15 @@ export const updateOrderStatus = asyncHandler( async(req, res) => {
 
       //restore stock  for each item in this order
       const [orderItems] = await connection.query(
-        `SELECT product_id, size_id, quantity FROM order_items WHERE order_id = ?`,
+        `SELECT product_id, product_variant_id, quantity FROM order_items WHERE order_id = ?`,
         [order_id]
       );
 
       for (const item of orderItems) {
-        if (item.size_id) {
+        if (item.product_variant_id) {
           await connection.query(
-            `UPDATE product_sizes SET stock = stock + ? WHERE id = ?`,
-            [item.quantity, item.size_id]
+            `UPDATE product_variants SET stock = stock + ? WHERE id = ?`,
+            [item.quantity, item.product_variant_id]
           );
         }
       }
@@ -557,15 +557,15 @@ export const adminCancelOrder = asyncHandler( async(req, res) => {
 
       //restore stock  for each item in this order
       const [orderItems] = await connection.query(
-        `SELECT product_id, size_id, quantity FROM order_items WHERE order_id = ?`,
+        `SELECT product_id, product_variant_id, quantity FROM order_items WHERE order_id = ?`,
         [order_id]
       );
 
       for (const item of orderItems) {
-        if (item.size_id) {
+        if (item.product_variant_id) {
           await connection.query(
-            `UPDATE product_sizes SET stock = stock + ? WHERE id = ?`,
-            [item.quantity, item.size_id]
+            `UPDATE product_variants SET stock = stock + ? WHERE id = ?`,
+            [item.quantity, item.product_variant_id]
           );
         }
       }

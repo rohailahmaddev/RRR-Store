@@ -18,12 +18,12 @@ export const createCartTable = async () => {
         id          INT AUTO_INCREMENT PRIMARY KEY,
         cart_id     INT NOT NULL,
         product_id  INT NOT NULL,
-        size_id     INT,
+        product_variant_id     INT,
         quantity    INT DEFAULT 1,
         FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE CASCADE,
         FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-        FOREIGN KEY (size_id) REFERENCES product_sizes(id) ON DELETE SET NULL,
-        UNIQUE (cart_id, product_id, size_id),
+        FOREIGN KEY (product_variant_id) REFERENCES product_variants(id) ON DELETE SET NULL,
+        UNIQUE (cart_id, product_id, product_variant_id),
         INDEX idx_cart_items_cart (cart_id)
     )
   `);

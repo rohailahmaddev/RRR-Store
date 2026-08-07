@@ -39,13 +39,13 @@ export const createOrderTable = async () => {
         id          INT AUTO_INCREMENT PRIMARY KEY,
         order_id    INT NOT NULL,
         product_id  INT NOT NULL,
-        size_id     INT,
+        product_variant_id     INT,
         quantity    INT NOT NULL,
         price       DECIMAL(10, 2) NOT NULL, -- snapshot price at time of order
         FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
         FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
-        FOREIGN KEY (size_id) REFERENCES product_sizes(id) ON DELETE SET NULL,
-        UNIQUE (order_id, product_id, size_id),
+        FOREIGN KEY (product_variant_id) REFERENCES product_variants(id) ON DELETE SET NULL,
+        UNIQUE (order_id, product_id, product_variant_id),
         INDEX idx_order_items_order (order_id),
         INDEX idx_order_items_product (product_id)
     )
