@@ -28,9 +28,10 @@ app.use(cookieParser());
 
 
 import authRoutes from "./routes/auth.routes.js";
-import productRoutes from "./routes/product.routes.js"
-import cartRoutes from "./routes/cart.routes.js"
-import orderRoutes from "./routes/order.routes.js"
+import productRoutes from "./routes/product.routes.js";
+import cartRoutes from "./routes/cart.routes.js";
+import orderRoutes from "./routes/order.routes.js";
+import csvRoutes from "./routes/csv.routes.js";
 
 //auth route
 app.use("/api/user", authRoutes);
@@ -43,6 +44,9 @@ app.use("/api",cartRoutes)
 
 //order route
 app.use("/api/order",orderRoutes)
+
+//csv route
+app.use("/api/csv",csvRoutes)
 
 app.use((req, res, next) => {
   next(new ApiError(404, `Route not found: ${req.originalUrl}`));

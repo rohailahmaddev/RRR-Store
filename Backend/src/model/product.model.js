@@ -59,19 +59,6 @@ export const createProductTable = async () => {
     )
   `);   
 
-  // Sizess
-  // await pool.query(`
-  //   CREATE TABLE IF NOT EXISTS product_sizes (
-  //       id          INT AUTO_INCREMENT PRIMARY KEY,
-  //       product_id  INT NOT NULL,
-  //       size_name   VARCHAR(50) NOT NULL,
-  //       stock       INT DEFAULT 0,
-  //       FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-  //       UNIQUE (product_id, size_name),
-  //       INDEX idx_sizes_product (product_id)
-  //   )
-  // `);
-
   //product variants
   await pool.query(`
     CREATE TABLE IF NOT EXISTS product_variants (
@@ -83,6 +70,5 @@ export const createProductTable = async () => {
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     UNIQUE (product_id, size_name, color),
     INDEX idx_variants_product (product_id)
-  
     )`)
 };

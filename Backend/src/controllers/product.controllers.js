@@ -3,10 +3,10 @@ import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { deleteFromCloudinary } from "../utils/Cloudinary.js";
-import { uploadImagesOnCloudinary } from "../utils/helper.js";
+import { parseJson, uploadImagesOnCloudinary, validateVariantsArray } from "../utils/helper.js";
 
 // find and insert categories
-const insertCategories = async (connection, category_name) => {
+export const insertCategories = async (connection, category_name) => {
     let categoryId;
 
     const [existingCategory] = await connection.query(
@@ -40,15 +40,19 @@ const insertCategories = async (connection, category_name) => {
 export const addProduct = asyncHandler(async (req, res) => {
 
     const { product_name, description, price, category_name, sku } = req.body;
-    const product_variants = JSON.parse(req.body.product_variants || "[]");
-    // const product_colors = JSON.parse(req.body.product_colors);
 
     if (!product_name || !description || !price || !category_name || !sku) {
-        throw new ApiError(402, "All fields required");
+        throw new ApiError(400, "All fields required");
     }
 
-    if (!Array.isArray(product_variants) || product_variants.length === 0) {
-        throw new ApiError(400, "At least one product variant i.e size and color is required");
+    if (isNaN(parseFloat(price))) {
+      throw new ApiError(400, "Price must be a valid number");
+    }
+
+    let product_variants = parseJson(req.body.product_variants);
+
+    if (!Array.isArray(product_variants)) {
+      throw new ApiError(400, "product_variants must be an array");
     }
 
     const imageLocalPaths = req.files?.images?.map((file) => file.path) || [];
@@ -85,9 +89,11 @@ export const addProduct = asyncHandler(async (req, res) => {
                 [insertedProductId, img?.url, img.public_id, img === uploadedImages[0]]
             );
         }
+         
+        const productVariants = validateVariantsArray(product_variants)
 
         //insert product variants
-        for (const variant of product_variants) {
+        for (const variant of productVariants) {
             await connection.query(
                 `INSERT INTO product_variants (product_id, size_name, color, stock) VALUES(?,?,?,?)`,
                 [insertedProductId, variant.size_name, variant.color, variant.stock]
@@ -377,6 +383,10 @@ export const updateProductListing = asyncHandler(async (req, res) => {
 
     const { product_name, description, price, category_name, sku } = req.body;
 
+    if (isNaN(parseFloat(price))) {
+      throw new ApiError(400, "Price must be a valid number");
+    }
+
     const [rows] = await pool.query(`
         SELECT * FROM products WHERE id = ?
         `, [product_id])
@@ -390,11 +400,19 @@ export const updateProductListing = asyncHandler(async (req, res) => {
     if (sku !== undefined) fieldToUpdate.sku = sku;
     if (product_name !== undefined) fieldToUpdate.name = product_name;
     if (description !== undefined) fieldToUpdate.description = description;
-    if (price !== undefined) fieldToUpdate.price = price;
+    if (price !== undefined) fieldToUpdate.price = parseFloat(price);
 
-    const product_variants = req.body.product_variants ? JSON.parse(req.body.product_variants) : null;
-    const deletedImageIds = req.body.deleted_image_ids ? JSON.parse(req.body.deleted_image_ids) : [];
+    let product_variants = parseJson(req.body.product_variants);
+    let deletedImageIds = parseJson(req.body.deleted_image_ids);
 
+    if (!Array.isArray(product_variants)) {
+      throw new ApiError(400, "product_variants must be an array");
+    }
+
+    if(!Array.isArray(deletedImageIds)){
+        throw new ApiError(400, " Deleted image must be in array.")
+    }
+   
     const imageLocalPaths = req.files?.images?.map((file) => file.path) || [];
 
     let uploadedImages = [];
@@ -446,8 +464,11 @@ export const updateProductListing = asyncHandler(async (req, res) => {
         }
 
         // Replace variants, if provided
-        if (product_variants && Array.isArray(product_variants)) {
-            for (const variant of product_variants) {
+        if (product_variants.length>0 && Array.isArray(product_variants)) {
+            
+            const productVariants = validateVariantsArray(product_variants)
+
+            for (const variant of productVariants) {
                 await connection.query(
                     `INSERT INTO product_variants (product_id, size_name, color, stock) 
                     VALUES (?, ?, ?, ?) 

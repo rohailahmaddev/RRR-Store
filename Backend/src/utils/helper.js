@@ -105,3 +105,31 @@ export const getCartSubtotal = async (connection, cartId) => {
   );
   return { subtotal: result[0].subtotal, totalItems: result[0].totalItems };
 }
+
+export const validateVariantsArray = (product_variants) => {
+    const productVariants = product_variants.length > 0 ? 
+        product_variants.map((variant, index) => {
+
+            if (variant.stock === undefined || variant.stock === "" || isNaN(parseInt(variant.stock))) {
+                 throw new ApiError(400, `Variant at index ${index} has an invalid or missing stock value`);
+            }
+            return{
+            size_name: variant.size_name || "Standard",
+            color: variant.color || "Default",
+            stock: parseInt(variant.stock),
+            };
+        }): [{ size_name: "Standard", color: "Default", stock: 0 }];
+
+    return productVariants;
+}
+
+export const parseJson = (ele) => {
+  let Array
+  try {
+    Array = JSON.parse(ele || "[]");
+  } catch (error) {
+    throw new ApiError(400, `Invalid data format ${error.message}`);
+  }
+
+  return Array;
+}
