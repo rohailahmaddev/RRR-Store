@@ -3,6 +3,7 @@ import { activateUser, deactivateUser, forgotPassword, loginUser, logoutUser, re
 import upload from "../middlewares/multer.middleware.js";
 import { isAdmin } from "../middlewares/isAdmin.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { passwordResetRateLimiter, RateLimiter, verificationEmailRateLimiter } from "../utils/RateLimiter.js";
 
 const router = Router();
 
@@ -12,12 +13,12 @@ router.route("/register").post(
 );
 
 router.route("/verify-email/:token").get(verifyEmail);
-router.route("/resend-verification-email").post(resendVerificationEmail);
-router.route("/login").post(loginUser);
+router.route("/resend-verification-email").post(verificationEmailRateLimiter, resendVerificationEmail);
+router.route("/login").post(loginRateLimiter, loginUser);
 router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/refresh-token").post(refreshToken);
 router.route("/forgot-password").post(forgotPassword);
-router.route("/reset-password/:token").post(resetPassword);
+router.route("/reset-password/:token").post(passwordResetRateLimiter,resetPassword);
 
 router.route("/:userId/deactivate").patch(verifyJWT, isAdmin, deactivateUser);
 router.route("/:userId/activate").patch(verifyJWT, isAdmin, activateUser);

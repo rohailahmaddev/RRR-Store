@@ -188,6 +188,10 @@ export const loginUser = asyncHandler(async (req, res) => {
 
   const { email, password } = req.body;
 
+  if(!email || !password ){
+    throw new ApiError(403, "Login and password is required")
+  }
+
   const [user] = await pool.query(
     `SELECT * FROM users WHERE email = ?`,
     [email]
@@ -197,10 +201,51 @@ export const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid email or account is inactive. Please contact support.")
   }
 
+  //validate locked account
+  if(user[0].locked_until && new Date(user[0].locked_until) > new Date()){
+    const minutesLeft = Math.ceil((new Date(user[0].locked_until) - new Date()) / 60000);
+    throw new ApiError(429,`Account temporarily locked. Try again in ${minutesLeft} minute(s).`)
+  }
+  
   const isPasswordMatch = await bcrypt.compare(password, user[0].password);
-
+  
+  const MAX_ATTEMPT = 5;
+  const LOCKED_MINUTES = 59;
   if (!isPasswordMatch) {
-    throw new ApiError(401, "Invalid password. Please try again.")
+
+    let failedAttempts = user[0].failed_login_attempts + 1;
+    if(failedAttempts >= MAX_ATTEMPT){
+      try {
+        await pool.query(`UPDATE users SET failed_login_attempts = ?, locked_until = DATE_ADD( NOW(), INTERVAL ? MINUTE) WHERE id = ?`,
+        [failedAttempts, LOCKED_MINUTES, user[0].id]
+        )
+      } catch (error) {
+        throw new ApiError(500, "Something went wrong while locking the account");
+      }
+      throw new ApiError(401, `Invalid password accout is locked please try again after 59 minutes.`);
+    } else {
+      try {
+
+        await pool.query(` UPDATE users SET failed_login_attempts = ? WHERE id = ?`,
+        [failedAttempts, user[0].id])
+
+      } catch (error) {
+        throw new ApiError(500, "Something went wrong");
+      }
+
+      throw new ApiError(401, `Invalid passowrd remaining attempts ${MAX_ATTEMPT-failedAttempts}`)
+    }
+
+  } else {
+
+    try {
+      await pool.query(`UPDATE users SET failed_login_attempts = 0 , locked_until = null WHERE id = ?`,
+        [user[0].id]
+      )
+    } catch (error) {
+       throw new ApiError(500, "Something went wrong");
+    }
+
   }
 
   if (!user[0].is_verified) {
@@ -299,6 +344,16 @@ export const refreshToken = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid refresh token");
   }
 
+  const [user] = await pool(`SELECT * FROM users WHERE id = ?`,[tokenRecord[0].user_id])
+  if(user.length===0){
+    throw new ApiError(401, "Invalid user.")
+  }
+  //validate locked account
+  if(user[0].locked_until && new Date(user[0].locked_until) > new Date()){
+    const minutesLeft = Math.ceil((new Date(user[0].locked_until) - new Date()) / 60000);
+    throw new ApiError(429,`Account temporarily locked. Try again in ${minutesLeft} minute(s).`)
+  }
+  
   // Reused after rotation -> possible theft, kill the whole chain
   if (tokenRecord.is_revoked) {
     await revokeTokenChain(tokenRecord.id);
