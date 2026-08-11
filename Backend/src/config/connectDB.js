@@ -1,7 +1,6 @@
 import mysql from "mysql2/promise"
 import pool from "./index.db.js" 
 
-
 const connectDB = async () => {
     try {
 
@@ -16,6 +15,5 @@ const connectDB = async () => {
         
     }
 }
-
 
 export default connectDB

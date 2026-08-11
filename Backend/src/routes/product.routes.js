@@ -1,5 +1,5 @@
 import Router from "router"
-import { activateProductListing, addProduct, addProductVariant, createCategory, deactivateProductListing, deleteCategory, deleteProductVariant, deleteReviews, getAllCategories, getDeactivatedProductListing, getProducts, getSingleProduct, setReviews, updateCategory, updateProductListing, updateProductVariant, updateReviews } from "../controllers/product.controllers.js"
+import { activateProductListing, addProduct, addProductVariant, createCategory, deactivateProductListing, deleteCategory, deleteProductVariant, deleteReviews, getAllCategories, getDeactivatedProductListing, getProducts, getSingleProduct, relatedProducts, setReviews, updateCategory, updateProductListing, updateProductVariant, updateReviews } from "../controllers/product.controllers.js"
 import upload from "../middlewares/multer.middleware.js"
 import { isAdmin } from "../middlewares/isAdmin.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js"
@@ -20,6 +20,7 @@ router.route("/products/:id")
 
 router.route("/products/:id/activate").patch(verifyJWT, isAdmin, activateProductListing);
 router.route("/products/:id/deactivate").patch(verifyJWT, isAdmin, deactivateProductListing);
+router.route("/products/:id/related").get(verifyJWT, relatedProducts)
 
 // Sizes (nested under product)
 router.route("/products/:productId/sizes")

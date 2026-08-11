@@ -1,4 +1,4 @@
-import pool from "../db/index.db.js";
+import pool from "../config/index.db.js";
 import ApiError from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import jwt from "jsonwebtoken"

@@ -1,4 +1,4 @@
-import pool from "../db/index.db.js";
+import pool from "../config/index.db.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import bcrypt from "bcrypt";
 import ApiError from "../utils/ApiError.js";
@@ -470,8 +470,7 @@ export const resetPassword = asyncHandler(async (req, res) => {
 
 export const deactivateUser = asyncHandler(async (req, res) => {
 
-  const { userId } = req.params;
-  const { adminId } = req.user.id;
+  const { id:userId } = req.params;
 
   if (Number(userId) === adminId) {
     throw new ApiError(400, "Admin cannot deactivate their own account.")
@@ -494,29 +493,55 @@ export const deactivateUser = asyncHandler(async (req, res) => {
   if (!user[0].is_active) {
     throw new ApiError(400, "User account is already deactivated.")
   }
-  // Deactivate the user account
-  await pool.query(
-    `UPDATE users SET is_active = false WHERE id = ?`,
-    [userId]
-  )
+  const connection = pool.getConnection()
 
-  // Revoke all active refresh tokens so existing sessions die immediately
-  await pool.query(
-    `UPDATE refresh_tokens SET is_revoked = true WHERE user_id = ? AND is_revoked = false`,
-    [userId]
-  );
+  try {
 
-  return res
+    await connection.beginTransaction()
+    // Deactivate the user account
+    await connection.query(
+      `UPDATE users SET is_active = false WHERE id = ?`,
+      [userId]
+    )
+    
+    // Revoke all active refresh tokens so existing sessions die immediately
+    await connection.query(
+      `UPDATE refresh_tokens SET is_revoked = true WHERE user_id = ? AND is_revoked = false`,
+      [userId]
+    );
+
+    await connection.commit()
+
+    //create audit logs
+    await logAudit({
+      userId: req.user.id,
+      action: "DEACTIVATE_USER",
+      entityType: "users",
+      entityId: Number(userId),
+      details: { is_active: {from: user[0].is_active, to: false} },
+      ipAddress: req.ip,
+      connection, // pass the transaction connection here
+    });
+
+    return res
     .status(200)
     .json(new ApiResponse(200, "User account deactivated successfully."))
+
+  } catch (error) {
+    await connection.rollback();
+    throw new ApiError(500, `Failed to deactivated the user`)    
+  } finally {
+    connection.release()
+  }
+
 })
 
 export const activateUser = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const { id:userId } = req.params;
 
   const [rows] = await pool.query(
     `SELECT id, is_active FROM users WHERE id = ?`,
-    [id]
+    [userId]
   );
 
   const targetUser = rows[0];
@@ -526,7 +551,7 @@ export const activateUser = asyncHandler(async (req, res) => {
   }
 
   //admin cannot activate their own account
-  if (user[0].role === "admin") {
+  if (targetUser.role === "admin") {
     throw new ApiError(403, "Admin accounts cannot be activated.")
   }
 
@@ -534,10 +559,25 @@ export const activateUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "User is already active")
   }
 
-  await pool.query(
+  const [updatedRows] = await pool.query(
     `UPDATE users SET is_active = true WHERE id = ?`,
     [id]
   );
+
+ 
+  if(updatedRows.affectedRows === 0){
+    throw new ApiError(500, "Failed to activate the user.")
+  }
+
+  //create audit logs
+  await logAudit({
+    userId: req.user.id,
+    action: "ACTIVATE_USER",
+    entityType: "users",
+    entityId: Number(userId),
+    details: { is_active: {from: targetUser.is_active, to: true} },
+    ipAddress: req.ip,
+  });
 
   return res
     .status(200)

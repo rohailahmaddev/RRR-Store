@@ -1,4 +1,4 @@
-import pool from "../db/index.db.js";
+import pool from "../config/index.db.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
@@ -126,7 +126,6 @@ export const addProduct = asyncHandler(async (req, res) => {
 
 })
 
-
 export const getProducts = asyncHandler(async (req, res) => {
 
     const { page = 1, limit = 20, search_name, categoryId, min_price, max_price, sort_by } = req.query;
@@ -178,7 +177,7 @@ export const getProducts = asyncHandler(async (req, res) => {
         price_asc: "price ASC",
         price_desc: "price DESC",
         newest: "created_at DESC",
-        rating: "rating DESC",
+        rating: "rating ASC",
     };
 
     query += ` ORDER BY ${sortMap[sort_by] || "products.created_at DESC"}`
@@ -232,7 +231,7 @@ export const getSingleProduct = asyncHandler(async (req, res) => {
 
     const [rows] = await pool.query(`
         SELECT products.id, products.sku, products.name, products.description, products.price, products.rating, products.rating_count, 
-        c.name AS category_name,
+        c.name AS category_name, c.id AS category_id,
 
         (SELECT CONCAT(
             '[', 
@@ -309,7 +308,7 @@ export const deactivateProductListing = asyncHandler(async (req, res) => {
 
     const [rows] = await pool.query(
         `SELECT id, is_active FROM products WHERE id = ?`,
-        [productId]
+        [product_id]
     );
 
     if (rows.length === 0) {
@@ -320,7 +319,21 @@ export const deactivateProductListing = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Product listing is already deactivated");
     }
 
-    await pool.query(`UPDATE products SET is_active = false WHERE id = ?`, [product_Id]);
+    const [updatedRows] = await pool.query(`UPDATE products SET is_active = false WHERE id = ?`, [product_Id]);
+
+    if(updatedRows.affectedRows === 0 ){
+        throw new ApiError(500, "Failed to deactivated listing")
+    }
+
+    //create audit logs
+    await logAudit({
+      userId: req.user.id,
+      action: "DEACTIVATE_PRODUCT_LISTING",
+      entityType: "products",
+      entityId: Number(product_id),
+      details: { is_active: {from: rows[0].is_active, to: false} },
+      ipAddress: req.ip,
+    });
 
     return res
         .status(200)
@@ -344,7 +357,21 @@ export const activateProductListing = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Product listing is already activated");
     }
 
-    await pool.query(`UPDATE products SET is_active = true WHERE id = ?`, [product_Id]);
+    const [updatedRows] = await pool.query(`UPDATE products SET is_active = true WHERE id = ?`, [product_Id]);
+
+    if(updatedRows.affectedRows === 0 ){
+        throw new ApiError(500, "Failed to activate listing")
+    }
+
+    //create audit logs
+    await logAudit({
+      userId: req.user.id,
+      action: "ACTIVATE_PRODUCT_LISTING",
+      entityType: "products",
+      entityId: Number(product_id),
+      details: { is_active: {from: rows[0].is_active, to: true} },
+      ipAddress: req.ip,
+    });
 
     return res
         .status(200)
@@ -893,100 +920,51 @@ export const addProductVariant = asyncHandler(async (req, res) => {
     );  
 });
 
+export const relatedProducts = asyncHandler(async (req, res) => {
+    const {id:product_id} = req.params
 
-//search & discovery
-// export const searchProduct = asyncHandler(async(req, res) => {
-//     const { page = 1, limit = 10, search_name, categoryId, max_price, min_price, rating } = req.query;
+    const [productRows] = await pool.query(
+    `SELECT category_id FROM products WHERE id = ? AND is_active = true`,
+      [productId]
+    );
 
-//     let query = `
-//         SELECT p.name,p.sku, p.price, p.rating, p.rating_count,
-//         c.name AS categroy_name,
+    if (productRows.length === 0) {
+      throw new ApiError(404, "Product not found");
+    }
 
-//         (
-//             SELECT pi.image_url
-//             FROM product_image pi
-//             WHERE pi.poduct_id = p.id AND is_primary = true
-//             LIMIT 1
-//         ) AS image_url
+    const categoryId = productRows[0].category_id;
 
-//         FROM products p
-//         LEFT JOIN categories c 
-//         ON p.category_id = c.id  
-//         WHERE p.is_active = true
-//     `
+    if (!categoryId) {
+      return res.status(200).json(new ApiResponse(200, "No related products", []));
+    }
 
-//     const param = []
+    const [products] = await pool.query(`
+    SELECT products.id, products.sku, products.name, products.description, products.price, products.rating,
+    products.rating_count,
+    categories.name AS category_name,
 
-//     //filter by product name
-//     if(search_name){
-//         query += `AND p.name = ?`
-//         param.push(search_name)
-//     }
-//     //filter by category
-//     if (categoryId) {
-//         query += ` AND category_id = ?`
-//         param.push(categoryId)
-//     }
+    (
+        SELECT image_url 
+        FROM product_images 
+        WHERE product_images.product_id = products.id 
+          AND product_images.is_primary = true 
+        LIMIT 1
+    ) AS image_url
 
-//     //filter by min_price
-//     if (min_price) {
-//         query += ` AND price >= ?`
-//         param.push(min_price)
-//     }
+    FROM products
+    LEFT JOIN categories
+    ON categories.id = products.category_id
+    WHERE products.category_id = ? AND products.id != ?  AND products.is_active = true 
+    ORDER BY products.rating ASC 
+    LIMIT 10
+    `,[category_id,product_id])
 
-//     //filter by max_price
-//     if (max_price) {
-//         query += ` AND price <= ?`
-//         param.push(max_price)
-//     }
+    if(products.length === 0){
+        throw new ApiError(200, "No related products")
+    }
 
-//     const sortMap = {
-//         price_asc: "price ASC",
-//         price_desc: "price DESC",
-//         newest: "created_at DESC",
-//         rating: "rating DESC",
-//     };
+    return res
+    .status(200)
+    .json(new ApiResponse(200, "Related product fetched successfully", products))
 
-//     query += ` ORDER BY ${sortMap[sort_by] || "products.created_at DESC"}`
-//     const offset = (Number(page) - 1) * Number(limit)
-
-//     query += ` LIMIT ? OFFSET ? `
-//     param.push(Number(limit), offset)
-
-//     const [products] = await pool.query(query, param)
-
-//     let count_query = `SELECT COUNT(*) AS total FROM products WHERE is_active = true `
-//     const count_param = []
-
-//     if (categoryId) {
-//         count_query += `AND category_id = ?`
-//         count_param.push(categoryId)
-//     }
-
-//     //count by min_price
-//     if (min_price) {
-//         count_query += `AND price >= ?`
-//         count_param.push(min_price)
-//     }
-
-//     //filter by max_price
-//     if (max_price) {
-//         count_query += `AND price <= ?`
-//         count_param.push(max_price)
-//     }
-
-//     const [count_result] = await pool.query(count_query, count_param)
-//     const total_products = count_result[0].total
-
-//     return res
-//         .status(200)
-//         .json(new ApiResponse(200, "Products fetched successfully", {
-//             products,
-//             pagination: {
-//                 currentPage: Number(page),
-//                 totalPages: Math.ceil(total_products / limit),
-//                 total_products,
-//                 limit: Number(limit),
-//             },
-//         }))
-// })
+})

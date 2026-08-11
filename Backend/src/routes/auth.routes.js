@@ -3,7 +3,7 @@ import { activateUser, deactivateUser, forgotPassword, loginUser, logoutUser, re
 import upload from "../middlewares/multer.middleware.js";
 import { isAdmin } from "../middlewares/isAdmin.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { passwordResetRateLimiter, RateLimiter, verificationEmailRateLimiter } from "../utils/RateLimiter.js";
+import { loginRateLimiter, passwordResetRateLimiter, verificationEmailRateLimiter } from "../utils/RateLimiter.js";
 
 const router = Router();
 

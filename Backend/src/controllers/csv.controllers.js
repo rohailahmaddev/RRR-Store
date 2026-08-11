@@ -1,5 +1,5 @@
 import { Parser } from "json2csv";
-import pool from "../db/index.db.js";
+import pool from "../config/index.db.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import fs from "fs";
 import csvParser from "csv-parser";
@@ -27,6 +27,20 @@ export const exportProductCSV = asyncHandler(async (req, res) => {
     const parser = new Parser({ fields });
     const csv = parser.parse(products);
 
+        if(updatedRows.affectedRows === 0 ){
+        throw new ApiError(500, "Failed to deactivated listing")
+    }
+
+    //create audit logs
+    await logAudit({
+      userId: req.user.id,
+      action: "EXPORT_SIMPLE_CSV",
+      entityType: "CSV",
+      entityId: null,
+      details: { export_csv: "Export simple products csv" },
+      ipAddress: req.ip,
+    });
+
     res.header("Content-Type", "text/csv");
     res.attachment(`products-export-${Date.now()}.csv`);
     res.send(csv);
@@ -53,6 +67,16 @@ export const exportPrductVariantCSV = asyncHandler(async (req, res) => {
     const fields = ["id", "name", "sku", "price", "rating", "rating_count", "category_name", "is_active", "size_name", "color", "stock"];
     const parser = new Parser({ fields });
     const csv = parser.parse(variants);
+
+    //create audit logs
+    await logAudit({
+      userId: req.user.id,
+      action: "EXPORT_DETAIL_CSV",
+      entityType: "CSV",
+      entityId: null,
+      details: { export_csv: "Export detail products csv"},
+      ipAddress: req.ip,
+    });
 
     res.header("Content-Type", "text/csv");
     res.attachment(`product-variants-${Date.now()}.csv`);
@@ -163,6 +187,18 @@ export const importProductCSV = asyncHandler(async (req, res) => {
             }
         }
         await connection.commit();
+        //create audit logs
+        await logAudit({
+          userId: req.user.id,
+          action: "IMPORT_PRODUCT_CSV",
+          entityType: "CSV",
+          entityId: null,
+          details: { export_csv: "Import products csv" },
+          ipAddress: req.ip,
+        });
+
+
+        res.status(200).json(200, "All products imported successfully from CSV file" );
     } catch (error) {
         await connection.rollback();
         throw new ApiError(500, `Failed to import products from CSV ${error}`);
@@ -170,5 +206,4 @@ export const importProductCSV = asyncHandler(async (req, res) => {
         connection.release();
     }
 
-    res.status(200).json(200, "All products imported successfully from CSV file" );
 })

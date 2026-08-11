@@ -1,4 +1,4 @@
-import pool from "../db/index.db.js";
+import pool from "../config/index.db.js";
 import ApiError from "./ApiError.js";
 import { deleteFromCloudinary, uploadOnCloudinary } from "./Cloudinary.js";
 import { getAccessToken, getRefreshToken } from "./JWTokens.js";

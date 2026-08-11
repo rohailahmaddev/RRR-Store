@@ -1,4 +1,4 @@
-import pool from "../db/index.db.js";
+import pool from "../config/index.db.js";
 
 export const createCartTable = async () => {
   // Cart header — one per user

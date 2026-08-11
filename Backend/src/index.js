@@ -1,10 +1,11 @@
 import dotenv from "dotenv";
 import app from "./app.js";
-import connectDB from "./db/connectDB.js";
+import connectDB from "./config/connectDB.js";
 import { createProductTable } from "./model/product.model.js";
 import { createUserTable } from "./model/user.model.js";
 import { createCartTable } from "./model/cart.model.js";
 import { createOrderTable } from "./model/order.model.js";
+import { createLogTable } from "./model/logs.model.js";
 
 
 
@@ -24,6 +25,7 @@ const startServer = async () => {
          await createProductTable();
          await createCartTable();
          await createOrderTable();
+         await createLogTable();
 
         app.listen(PORT, () => {
            console.log(`Server is running on port http://localhost:${PORT}`);

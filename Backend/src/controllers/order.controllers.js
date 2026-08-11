@@ -1,4 +1,4 @@
-import pool from "../db/index.db.js";
+import pool from "../config/index.db.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
@@ -440,14 +440,14 @@ export const updateOrderStatus = asyncHandler( async(req, res) => {
       throw new ApiError(400, `Cannot change status from ${currentStatus} to ${status}`);
     }
 
-    if(status === "cancelled"){
+    if(status === 'cancelled' && !result[0].status === 'delivered' && !result[0].status === 'shipped'){
 
     const connection = await pool.getConnection();
 
     try {
       await connection.beginTransaction()
 
-      //restore stock  for each item in this order
+      //restore stock for each item in this order
       const [orderItems] = await connection.query(
         `SELECT product_id, product_variant_id, quantity FROM order_items WHERE order_id = ?`,
         [order_id]
@@ -466,26 +466,40 @@ export const updateOrderStatus = asyncHandler( async(req, res) => {
         UPDATE orders SET status = ? WHERE id = ?
         `,['cancelled',order_id])
       
-      return res
-      .status(200)
-      .json(new ApiResponse(200, "Order status updated successfully"))
+      await connection.commit();
 
     } catch (error) {
       await connection.rollback();
       throw new ApiError(500, "Failed to cancel the order");
     } finally {
-      await connection.release();
+      connection.release();
     }
 
     } else {
-      const [order] = await connection.query(`
+      const [updatedOrder] = await connection.query(`
         UPDATE orders SET status = ? WHERE id = ?
       `,[status,order_id])
+
+      if(updatedOrder.affectedRows ===0){
+        throw new ApiError(500,"Failed to cancel the order")
+      }
+
     }
+
+    //create audit logs
+    await logAudit({
+      userId: req.user.id,
+      action: "UPDATE_ORDER_STATUS",
+      entityType: "orders",
+      entityId: Number(order_id),
+      details: { status: {from: order[0].status, to: status } },
+      ipAddress: req.ip,
+    });
 
     return res
     .status(200)
     .json(new ApiResponse(200, "Order status updated successfully"))
+
 })
 
 export const updatePaymentStatus = asyncHandler( async(req, res) => {
@@ -529,6 +543,16 @@ export const updatePaymentStatus = asyncHandler( async(req, res) => {
     if(result.affectedRows === 0){
       throw new ApiError(500, "Failed to update payment status")
     }
+
+    //create audit logs
+    await logAudit({
+      userId: req.user.id,
+      action: "UPDATE_PAYMENT_STATUS",
+      entityType: "orders",
+      entityId: Number(order_id),
+      details: { status: {from: order[0].payment_status, to: payment_status } },
+      ipAddress: req.ip,
+    });
 
     return res
     .status(200)
@@ -574,11 +598,27 @@ export const adminCancelOrder = asyncHandler( async(req, res) => {
         UPDATE orders SET status = ? WHERE id = ?
         `,['cancelled',order_id])
     
+    await connection.commit();
+    
+    //create audit logs
+    await logAudit({
+      userId: req.user.id,
+      action: "UPDATE_ORDER_STATUS",
+      entityType: "orders",
+      entityId: Number(order_id),
+      details: { status: {from: result[0].status, to: 'cancelled' } },
+      ipAddress: req.ip,
+    });
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, "Order status updated successfully"))
+
     } catch (error) {
       await connection.rollback();
       throw new ApiError(500, "Failed to cancel the order");
     } finally {
-      await connection.release();
+      connection.release();
     }
 })
 

@@ -1,18 +1,5 @@
-import {v2 as cloudinary} from "cloudinary"
 import fs from "fs"
-import dotenv from "dotenv"
-
-
-dotenv.config()
-
-
-//cloudinary configurations
-cloudinary.config({
-    cloud_name:process.env.CLOUD_NAME,
-    api_key:process.env.CLOUDINARY_API_KEY,
-    api_secret:process.env.CLOUDINARY_API_SECRET
-})
-
+import cloudinary from "../config/cloudinary.js"
 
 const deleteLocalFile = (filePath) => {
     try {
@@ -24,7 +11,6 @@ const deleteLocalFile = (filePath) => {
     }
 }
 
-
 const uploadOnCloudinary = async (localFilePath) => {
     try {
         if(!localFilePath) return null
@@ -34,12 +20,10 @@ const uploadOnCloudinary = async (localFilePath) => {
             }
         )
 
-
         console.log("File is uploaded on cloudinary. File src: " + response.url)
          
         // delete file from server
         deleteLocalFile(localFilePath)
-
 
         return response
        
