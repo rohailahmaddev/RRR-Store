@@ -1,82 +1,119 @@
+# =========================
 # Dependencies
+# =========================
 node_modules/
+.pnpm-store/
+.yarn/
+.yarn-cache/
 
-# Environment variables
+
+# =========================
+# Environment Variables
+# =========================
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
+# Keep the example environment file
+!.env.example
+
+
+# =========================
+# Build / TypeScript
+# =========================
+dist/
+build/
+out/
+*.tsbuildinfo
+
+
+# =========================
 # Logs
+# =========================
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
 
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
 
+# =========================
 # Coverage
+# =========================
 coverage/
 .nyc_output/
 
-# Build output
-dist/
-build/
-out/
 
-# Temporary files
+# =========================
+# Testing
+# =========================
+test-results/
+playwright-report/
+blob-report/
+
+
+# =========================
+# Uploads / Temporary Files
+# =========================
+uploads/
 tmp/
 temp/
+*.tmp
 
-# Cache
-.cache/
-.parcel-cache/
-.eslintcache
 
-# OS files
+# =========================
+# OS Files
+# =========================
 .DS_Store
 Thumbs.db
+Desktop.ini
 
-# IDEs
-.vscode/
+
+# =========================
+# IDE / Editors
+# =========================
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
 .idea/
+*.iml
+
 *.swp
 *.swo
 
-# TypeScript
-*.tsbuildinfo
 
-# Package manager
-.pnpm-store/
-.yarn/cache/
-.yarn/unplugged/
-.yarn/build-state.yml
-.yarn/install-state.gz
+# =========================
+# Prisma
+# =========================
+# DO NOT ignore prisma/schema.prisma
+# DO NOT ignore prisma/migrations/
 
-# Optional npm cache
-.npm/
-
-# Local databases
-*.sqlite
-*.sqlite3
+# Prisma local/dev database if ever used
 *.db
+*.db-journal
 
-# Uploads (if user-generated)
-uploads/
-public/uploads/
 
-# SSL certificates
+# =========================
+# Redis
+# =========================
+dump.rdb
+
+
+# =========================
+# Secrets / Certificates
+# =========================
 *.pem
 *.key
 *.crt
+*.p12
 
-# Misc
-.env.*
-!.env.example
+
+# =========================
+# Generated Files
+# =========================
+.cache/
+.eslintcache
+.stylelintcache

@@ -10,10 +10,13 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "ts-nodemone-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
   },
   "dependencies": {
+    "@prisma/adapter-mariadb": "^7.9.1",
+    "@prisma/client": "^7.9.1",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.10.0",
     "compression": "^1.8.1",
@@ -24,12 +27,20 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.6.2",
     "json2csv": "^6.0.0-alpha.2",
-    "jsonwebtoken": "^9.0.3",
     "mailgen": "^2.0.34",
     "mailtrap": "^4.6.1",
     "multer": "^2.2.0",
     "mysql2": "^3.22.5",
     "nodemailer": "^9.0.3",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.2.0",
+    "prisma": "^7.9.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^7.0.2"
   }
 }
