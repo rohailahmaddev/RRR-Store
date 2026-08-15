@@ -3,7 +3,8 @@ import { prisma } from "../config/prisma.js";
 import {ApiError} from "../shared/error/ApiError.js";
 import { asyncHandler } from "../shared/utility/AsyncHandler.js";
 import jwt from "jsonwebtoken";
-import { AccessTokenPayload, UserRow } from "../shared/types/index.types.js";
+import { AccessTokenPayload } from "../shared/types/index.types.js";
+import { userSelect } from "../shared/types/auth.types.js";
 
 export const verifyJWT = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
 
@@ -29,12 +30,11 @@ export const verifyJWT = asyncHandler(async (req: Request, res: Response, next: 
     throw new ApiError(401, "Invalid access token");
 
   }
-  const [rows] = await pool.query<UserRow[]>(
-    `SELECT id, full_name, email, role, is_active, is_verified FROM users WHERE id = ?`,
-    [decoded.id]
-  );
 
-  const user = rows[0];
+  const user = await prisma.users.findUnique({
+    where:{ id:decoded.id },
+    select: userSelect
+  })
 
   if (!user) {
     throw new ApiError(401, "User no longer exists");

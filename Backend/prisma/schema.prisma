@@ -32,4 +32,104 @@ model users{
   reset_token_expiry          DateTime?     
   created_at                  DateTime      @default(now())
   updated_at                  DateTime      @updatedAt()
+  refresh_tokens              refresh_tokens[]
+  user_addresses              user_addresses[]
+  reviews        reviews[]
 }
+
+model refresh_tokens {
+  id  Int @id @default(autoincrement())
+  user_id Int
+  token_hash String @db.VarChar(255)
+  user_agent String? @db.VarChar(255)
+  ip_address String? @db.VarChar(45)
+  is_revoked Boolean @default(false)
+  replaced_by Int?
+  created_at DateTime @default(now()) 
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  replaced refresh_tokens? @relation("TokenReplacement", fields: [replaced_by], references: [id], onDelete: SetNull)
+  replacementFor refresh_tokens[] @relation("TokenReplacement")
+  @@index([user_id])
+  @@index([token_hash])
+}
+
+model user_addresses {
+  id Int @id @default(autoincrement())
+  user_id Int 
+  label String? @db.VarChar(50)
+  full_name String @db.VarChar(100)
+  street String @db.VarChar(255)
+  city String @db.VarChar(100)
+  state String? @db.VarChar(100)
+  country String @db.VarChar(100)
+  postal_code String? @db.VarChar(20)
+  is_default Boolean @default(false)
+  created_at DateTime @default(now())
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  @@index([user_id])
+}
+
+//products related tables
+model categories {
+  id         Int        @id @default(autoincrement())
+  name       String     @unique @db.VarChar(100)
+  slug       String     @unique @db.VarChar(120)
+  created_at DateTime   @default(now())
+  products   products[]
+}
+
+model products {
+  id          Int          @id @default(autoincrement())
+  sku         String?      @unique @db.VarChar(50)
+  name        String       @db.VarChar(255)
+  description String?      @db.Text
+  price       Decimal      @db.Decimal(10, 2)
+  category_id Int?
+  rating      Decimal      @default(0.0) @db.Decimal(2, 1)
+  rating_count Int          @default(0)
+  is_active   Boolean      @default(true)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+  category    categories?  @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  reviews     reviews[]
+  images      product_images[]
+  variants    product_variants[]
+  @@index([category_id])
+}
+
+model reviews {
+  id         Int       @id @default(autoincrement())
+  product_id Int
+  user_id    Int
+  rating     Int       @db.TinyInt
+  comment    String?   @db.Text
+  created_at DateTime  @default(now())
+  product    products  @relation(fields: [product_id], references: [id], onDelete: Cascade )
+  user       users     @relation(fields: [user_id], references: [id], onDelete: Cascade )
+  @@unique([product_id, user_id])
+  @@index([product_id])
+}
+
+model product_images {
+  id         Int      @id @default(autoincrement())
+  product_id Int
+  image_url  String   @db.VarChar(500)
+  public_id  String   @db.VarChar(255)
+  is_primary Boolean  @default(false)
+  product    products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  @@index([product_id])
+}
+
+model product_variants {
+  id         Int      @id @default(autoincrement())
+  product_id Int
+  size_name  String   @db.VarChar(50)
+  color      String   @db.VarChar(50)
+  stock      Int      @default(0)
+  product    products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  @@unique([product_id, size_name, color])
+  @@index([product_id])
+}
+
+//cart related tables
+
