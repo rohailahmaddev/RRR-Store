@@ -4,13 +4,23 @@ import { deleteFromCloudinary, uploadOnCloudinary } from "../../infrastructure/s
 import { getAccessToken, getRefreshToken } from "../auth/jwt.js";
 import crypto from "crypto"
 import { prisma } from "../../config/database.js";
-import { userSelect } from "../types/auth.types.js";
+import { userSelect } from "../types/index.types.js";
 import { env } from "../../config/env.js";
 import { Decimal, TransactionClient } from "../../generated/prisma/internal/prismaNamespace.js";
+import bcrypt from "bcrypt";
 
-//hash tokens
 export const hashToken = (token:string):string => {
   return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+export const hashPassword = async (password:string):Promise<string> => {
+  const hashedPassword:string = await bcrypt.hash(password,10)
+  return hashedPassword;
+}
+
+export const comparePassword = async (newPassword:string, userPassword:string):Promise<boolean> => {
+  const isPassword:boolean = await bcrypt.compare(newPassword,userPassword)
+  return isPassword;
 }
 
 export const revokeTokenChain = async (tokenId:number) => {

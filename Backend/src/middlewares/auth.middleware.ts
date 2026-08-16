@@ -4,7 +4,7 @@ import {ApiError} from "../shared/utility/ApiError.js";
 import { asyncHandler } from "../shared/utility/asyncHandler.js";
 import jwt from "jsonwebtoken";
 import { AccessTokenPayload } from "../shared/types/index.types.js";
-import { userSelect } from "../shared/types/auth.types.js";
+import { userSelect } from "../shared/types/index.types.js";
 import { env } from "../config/env.js";
 
 export const verifyJWT = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {

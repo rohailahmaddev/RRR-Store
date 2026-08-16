@@ -1,5 +1,23 @@
 import Mailgen from "mailgen";
-import { AuthUser } from "./auth.types.js";
+
+import { Prisma } from "../../generated/prisma/client.js";
+
+export const userSelect = {
+  id: true,
+  email: true,
+  full_name: true,
+  role: true,
+  is_verified: true,
+  is_active: true,
+} satisfies Prisma.usersSelect;
+
+type AuthUser = Prisma.usersGetPayload<{ select: typeof userSelect }>;
+
+export interface User {
+  id: number;
+  email: string;
+  full_name: string;
+}
 
 export interface AccessTokenPayload{
   id: number;

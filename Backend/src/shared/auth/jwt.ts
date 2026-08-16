@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken"
 import crypto from "crypto";
 import {env} from "../../config/env.js"
 import type { StringValue } from "ms";
-import { User } from "../types/auth.types.js";
+import { User } from "../types/index.types.js";
 
 export const getAccessToken = (user:User):string => {
   return jwt.sign({
@@ -24,7 +24,7 @@ export const getRefreshToken = (user:User):string => {
   );
 }
 
-export const getTemporaryToken = ():object => {
+export const getTemporaryToken = ():{ unHashedToken:string, hashedToken:string, tokenExpiry:Date }=> {
 
   const unHashedToken = crypto.randomBytes(20).toString("hex")
 

@@ -1,7 +1,19 @@
 import rateLimit from "express-rate-limit";
 
-export const loginRateLimiter = rateLimit({
+export const registerRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 7,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+
+  message: {
+    success: false,
+    message: "Too many registration attempts. Try again later.",
+  },
+});
+
+export const loginRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
   limit: 7,                 
   standardHeaders: true,
   legacyHeaders: false,

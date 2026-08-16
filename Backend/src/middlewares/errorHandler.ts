@@ -57,6 +57,7 @@ export const errorHandler = ( err: Error, req: Request, res: Response, next: Nex
   const response = {
     success: false,
     statusCode: error.statusCode,
+    code:error.code,
     message: error.message,
     errors: error.errors,
     // Only leak stack trace in development
