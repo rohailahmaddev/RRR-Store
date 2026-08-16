@@ -51,7 +51,20 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  users: 'users'
+  users: 'users',
+  refresh_tokens: 'refresh_tokens',
+  user_addresses: 'user_addresses',
+  categories: 'categories',
+  products: 'products',
+  reviews: 'reviews',
+  product_images: 'product_images',
+  product_variants: 'product_variants',
+  cart: 'cart',
+  cart_items: 'cart_items',
+  orders: 'orders',
+  order_items: 'order_items',
+  notifications: 'notifications',
+  audit_logs: 'audit_logs'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -78,6 +91,8 @@ export const UsersScalarFieldEnum = {
   phone: 'phone',
   avatar_url: 'avatar_url',
   role: 'role',
+  failed_login_attempts: 'failed_login_attempts',
+  locked_until: 'locked_until',
   is_verified: 'is_verified',
   is_active: 'is_active',
   verify_token: 'verify_token',
@@ -91,12 +106,199 @@ export const UsersScalarFieldEnum = {
 export type UsersScalarFieldEnum = (typeof UsersScalarFieldEnum)[keyof typeof UsersScalarFieldEnum]
 
 
+export const Refresh_tokensScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  token_hash: 'token_hash',
+  user_agent: 'user_agent',
+  ip_address: 'ip_address',
+  is_revoked: 'is_revoked',
+  replaced_by: 'replaced_by',
+  created_at: 'created_at'
+} as const
+
+export type Refresh_tokensScalarFieldEnum = (typeof Refresh_tokensScalarFieldEnum)[keyof typeof Refresh_tokensScalarFieldEnum]
+
+
+export const User_addressesScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  label: 'label',
+  full_name: 'full_name',
+  street: 'street',
+  city: 'city',
+  state: 'state',
+  country: 'country',
+  postal_code: 'postal_code',
+  is_default: 'is_default',
+  created_at: 'created_at'
+} as const
+
+export type User_addressesScalarFieldEnum = (typeof User_addressesScalarFieldEnum)[keyof typeof User_addressesScalarFieldEnum]
+
+
+export const CategoriesScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  created_at: 'created_at'
+} as const
+
+export type CategoriesScalarFieldEnum = (typeof CategoriesScalarFieldEnum)[keyof typeof CategoriesScalarFieldEnum]
+
+
+export const ProductsScalarFieldEnum = {
+  id: 'id',
+  sku: 'sku',
+  name: 'name',
+  description: 'description',
+  price: 'price',
+  category_id: 'category_id',
+  rating: 'rating',
+  rating_count: 'rating_count',
+  is_active: 'is_active',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type ProductsScalarFieldEnum = (typeof ProductsScalarFieldEnum)[keyof typeof ProductsScalarFieldEnum]
+
+
+export const ReviewsScalarFieldEnum = {
+  id: 'id',
+  product_id: 'product_id',
+  user_id: 'user_id',
+  rating: 'rating',
+  comment: 'comment',
+  created_at: 'created_at'
+} as const
+
+export type ReviewsScalarFieldEnum = (typeof ReviewsScalarFieldEnum)[keyof typeof ReviewsScalarFieldEnum]
+
+
+export const Product_imagesScalarFieldEnum = {
+  id: 'id',
+  product_id: 'product_id',
+  image_url: 'image_url',
+  public_id: 'public_id',
+  is_primary: 'is_primary'
+} as const
+
+export type Product_imagesScalarFieldEnum = (typeof Product_imagesScalarFieldEnum)[keyof typeof Product_imagesScalarFieldEnum]
+
+
+export const Product_variantsScalarFieldEnum = {
+  id: 'id',
+  product_id: 'product_id',
+  size_name: 'size_name',
+  color: 'color',
+  stock: 'stock'
+} as const
+
+export type Product_variantsScalarFieldEnum = (typeof Product_variantsScalarFieldEnum)[keyof typeof Product_variantsScalarFieldEnum]
+
+
+export const CartScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type CartScalarFieldEnum = (typeof CartScalarFieldEnum)[keyof typeof CartScalarFieldEnum]
+
+
+export const Cart_itemsScalarFieldEnum = {
+  id: 'id',
+  cart_id: 'cart_id',
+  product_id: 'product_id',
+  product_variant_id: 'product_variant_id',
+  quantity: 'quantity'
+} as const
+
+export type Cart_itemsScalarFieldEnum = (typeof Cart_itemsScalarFieldEnum)[keyof typeof Cart_itemsScalarFieldEnum]
+
+
+export const OrdersScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  shipping_full_name: 'shipping_full_name',
+  shipping_phone: 'shipping_phone',
+  shipping_street: 'shipping_street',
+  shipping_city: 'shipping_city',
+  shipping_state: 'shipping_state',
+  shipping_country: 'shipping_country',
+  shipping_postal_code: 'shipping_postal_code',
+  status: 'status',
+  payment_status: 'payment_status',
+  payment_method: 'payment_method',
+  subtotal: 'subtotal',
+  discount: 'discount',
+  tax: 'tax',
+  shipping_fee: 'shipping_fee',
+  total_amount: 'total_amount',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type OrdersScalarFieldEnum = (typeof OrdersScalarFieldEnum)[keyof typeof OrdersScalarFieldEnum]
+
+
+export const Order_itemsScalarFieldEnum = {
+  id: 'id',
+  order_id: 'order_id',
+  product_id: 'product_id',
+  product_variant_id: 'product_variant_id',
+  quantity: 'quantity',
+  price: 'price'
+} as const
+
+export type Order_itemsScalarFieldEnum = (typeof Order_itemsScalarFieldEnum)[keyof typeof Order_itemsScalarFieldEnum]
+
+
+export const NotificationsScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  type: 'type',
+  title: 'title',
+  message: 'message',
+  is_read: 'is_read',
+  entity_type: 'entity_type',
+  entity_id: 'entity_id',
+  created_at: 'created_at'
+} as const
+
+export type NotificationsScalarFieldEnum = (typeof NotificationsScalarFieldEnum)[keyof typeof NotificationsScalarFieldEnum]
+
+
+export const Audit_logsScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  action: 'action',
+  entity_type: 'entity_type',
+  entity_id: 'entity_id',
+  details: 'details',
+  ip_address: 'ip_address',
+  created_at: 'created_at'
+} as const
+
+export type Audit_logsScalarFieldEnum = (typeof Audit_logsScalarFieldEnum)[keyof typeof Audit_logsScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const NullsOrder = {
@@ -118,4 +320,115 @@ export const usersOrderByRelevanceFieldEnum = {
 } as const
 
 export type usersOrderByRelevanceFieldEnum = (typeof usersOrderByRelevanceFieldEnum)[keyof typeof usersOrderByRelevanceFieldEnum]
+
+
+export const refresh_tokensOrderByRelevanceFieldEnum = {
+  token_hash: 'token_hash',
+  user_agent: 'user_agent',
+  ip_address: 'ip_address'
+} as const
+
+export type refresh_tokensOrderByRelevanceFieldEnum = (typeof refresh_tokensOrderByRelevanceFieldEnum)[keyof typeof refresh_tokensOrderByRelevanceFieldEnum]
+
+
+export const user_addressesOrderByRelevanceFieldEnum = {
+  label: 'label',
+  full_name: 'full_name',
+  street: 'street',
+  city: 'city',
+  state: 'state',
+  country: 'country',
+  postal_code: 'postal_code'
+} as const
+
+export type user_addressesOrderByRelevanceFieldEnum = (typeof user_addressesOrderByRelevanceFieldEnum)[keyof typeof user_addressesOrderByRelevanceFieldEnum]
+
+
+export const categoriesOrderByRelevanceFieldEnum = {
+  name: 'name',
+  slug: 'slug'
+} as const
+
+export type categoriesOrderByRelevanceFieldEnum = (typeof categoriesOrderByRelevanceFieldEnum)[keyof typeof categoriesOrderByRelevanceFieldEnum]
+
+
+export const productsOrderByRelevanceFieldEnum = {
+  sku: 'sku',
+  name: 'name',
+  description: 'description'
+} as const
+
+export type productsOrderByRelevanceFieldEnum = (typeof productsOrderByRelevanceFieldEnum)[keyof typeof productsOrderByRelevanceFieldEnum]
+
+
+export const reviewsOrderByRelevanceFieldEnum = {
+  comment: 'comment'
+} as const
+
+export type reviewsOrderByRelevanceFieldEnum = (typeof reviewsOrderByRelevanceFieldEnum)[keyof typeof reviewsOrderByRelevanceFieldEnum]
+
+
+export const product_imagesOrderByRelevanceFieldEnum = {
+  image_url: 'image_url',
+  public_id: 'public_id'
+} as const
+
+export type product_imagesOrderByRelevanceFieldEnum = (typeof product_imagesOrderByRelevanceFieldEnum)[keyof typeof product_imagesOrderByRelevanceFieldEnum]
+
+
+export const product_variantsOrderByRelevanceFieldEnum = {
+  size_name: 'size_name',
+  color: 'color'
+} as const
+
+export type product_variantsOrderByRelevanceFieldEnum = (typeof product_variantsOrderByRelevanceFieldEnum)[keyof typeof product_variantsOrderByRelevanceFieldEnum]
+
+
+export const ordersOrderByRelevanceFieldEnum = {
+  shipping_full_name: 'shipping_full_name',
+  shipping_phone: 'shipping_phone',
+  shipping_street: 'shipping_street',
+  shipping_city: 'shipping_city',
+  shipping_state: 'shipping_state',
+  shipping_country: 'shipping_country',
+  shipping_postal_code: 'shipping_postal_code'
+} as const
+
+export type ordersOrderByRelevanceFieldEnum = (typeof ordersOrderByRelevanceFieldEnum)[keyof typeof ordersOrderByRelevanceFieldEnum]
+
+
+export const notificationsOrderByRelevanceFieldEnum = {
+  type: 'type',
+  title: 'title',
+  message: 'message',
+  entity_type: 'entity_type'
+} as const
+
+export type notificationsOrderByRelevanceFieldEnum = (typeof notificationsOrderByRelevanceFieldEnum)[keyof typeof notificationsOrderByRelevanceFieldEnum]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+export const QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+} as const
+
+export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const audit_logsOrderByRelevanceFieldEnum = {
+  action: 'action',
+  entity_type: 'entity_type',
+  ip_address: 'ip_address'
+} as const
+
+export type audit_logsOrderByRelevanceFieldEnum = (typeof audit_logsOrderByRelevanceFieldEnum)[keyof typeof audit_logsOrderByRelevanceFieldEnum]
 

@@ -37,146 +37,149 @@ enum PaymentMethod {
   easypaisa
 }
 model users{
-  id                          Int           @id @default(autoincrement())
-  full_name                   String        @db.VarChar(100)
-  email                       String        @unique @db.VarChar(150)
-  password                    String        @db.VarChar(255)
-  phone                       String?       @db.VarChar(20)
-  avatar_url                  String?       @db.VarChar(500)
-  role                        Role          @default(customer)
-  is_verified                 Boolean       @default(false)
-  is_active                   Boolean       @default(true)
-  verify_token                String?       @db.VarChar(255)
-  verify_token_expiry         DateTime?     
-  reset_token                 String?       @db.VarChar(255)
-  reset_token_expiry          DateTime?     
-  created_at                  DateTime      @default(now())
-  updated_at                  DateTime      @updatedAt()
+  id                          Int               @id @default(autoincrement())
+  full_name                   String            @db.VarChar(100)
+  email                       String            @unique @db.VarChar(150)
+  password                    String            @db.VarChar(255)
+  phone                       String?           @db.VarChar(20)
+  avatar_url                  String?           @db.VarChar(500)
+  role                        Role              @default(customer)
+  failed_login_attempts       Int               @default(0)
+  locked_until                DateTime?
+  is_verified                 Boolean           @default(false)
+  is_active                   Boolean           @default(true)
+  verify_token                String?           @db.VarChar(255)
+  verify_token_expiry         DateTime?         
+  reset_token                 String?           @db.VarChar(255)
+  reset_token_expiry          DateTime?         
+  created_at                  DateTime          @default(now())
+  updated_at                  DateTime          @updatedAt()
   refresh_tokens              refresh_tokens[]
   user_addresses              user_addresses[]
   reviews        reviews[]
   cart cart?
   orders orders[]
   notifications notifications[]
+  audit_logs audit_logs[]
 }
 
 model refresh_tokens {
-  id  Int @id @default(autoincrement())
-  user_id Int
-  token_hash String @db.VarChar(255)
-  user_agent String? @db.VarChar(255)
-  ip_address String? @db.VarChar(45)
-  is_revoked Boolean @default(false)
-  replaced_by Int?
-  created_at DateTime @default(now()) 
-  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  replaced refresh_tokens? @relation("TokenReplacement", fields: [replaced_by], references: [id], onDelete: SetNull)
-  replacementFor refresh_tokens[] @relation("TokenReplacement")
+  id                          Int               @id @default(autoincrement())
+  user_id                     Int
+  token_hash                  String            @db.VarChar(255)
+  user_agent                  String?           @db.VarChar(255)
+  ip_address                  String?           @db.VarChar(45)
+  is_revoked                  Boolean           @default(false)
+  replaced_by                 Int?
+  created_at                  DateTime          @default(now()) 
+  user                        users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  replaced                    refresh_tokens?   @relation("TokenReplacement", fields: [replaced_by], references: [id], onDelete: SetNull)
+  replacementFor              refresh_tokens[]  @relation("TokenReplacement")
   @@index([user_id])
   @@index([token_hash])
 }
 
 model user_addresses {
-  id Int @id @default(autoincrement())
-  user_id Int 
-  label String? @db.VarChar(50)
-  full_name String @db.VarChar(100)
-  street String @db.VarChar(255)
-  city String @db.VarChar(100)
-  state String? @db.VarChar(100)
-  country String @db.VarChar(100)
-  postal_code String? @db.VarChar(20)
-  is_default Boolean @default(false)
-  created_at DateTime @default(now())
-  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id                          Int               @id @default(autoincrement())
+  user_id                     Int 
+  label                       String?           @db.VarChar(50)
+  full_name                   String            @db.VarChar(100)
+  street                      String            @db.VarChar(255)
+  city                        String            @db.VarChar(100)
+  state                       String?           @db.VarChar(100)
+  country                     String            @db.VarChar(100)
+  postal_code                 String?           @db.VarChar(20)
+  is_default                  Boolean           @default(false)
+  created_at                  DateTime          @default(now())
+  user                        users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
   @@index([user_id])
 }
 
 //products related tables
 model categories {
-  id         Int        @id @default(autoincrement())
-  name       String     @unique @db.VarChar(100)
-  slug       String     @unique @db.VarChar(120)
-  created_at DateTime   @default(now())
-  products   products[]
+  id                          Int               @id @default(autoincrement())
+  name                        String            @unique @db.VarChar(100)
+  slug                        String            @unique @db.VarChar(120)
+  created_at                  DateTime          @default(now())
+  products                    products[]
 }
 
 model products {
-  id          Int          @id @default(autoincrement())
-  sku         String?      @unique @db.VarChar(50)
-  name        String       @db.VarChar(255)
-  description String?      @db.Text
-  price       Decimal      @db.Decimal(10, 2)
-  category_id Int?
-  rating      Decimal      @default(0.0) @db.Decimal(2, 1)
-  rating_count Int          @default(0)
-  is_active   Boolean      @default(true)
-  created_at  DateTime     @default(now())
-  updated_at  DateTime     @updatedAt
-  category    categories?  @relation(fields: [category_id], references: [id], onDelete: SetNull)
-  reviews     reviews[]
-  images      product_images[]
-  variants    product_variants[]
-  cart_items cart_items[]
-  order_items order_items[]
+  id                          Int               @id @default(autoincrement())
+  sku                         String?           @unique @db.VarChar(50)
+  name                        String            @db.VarChar(255)
+  description                 String?           @db.Text
+  price                       Decimal           @db.Decimal(10, 2)
+  category_id                 Int?
+  rating                      Decimal           @default(0.0) @db.Decimal(2, 1)
+  rating_count                Int               @default(0)
+  is_active                   Boolean           @default(true)
+  created_at                  DateTime          @default(now())
+  updated_at                  DateTime          @updatedAt
+  category                    categories?       @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  reviews                     reviews[]
+  images                      product_images[]
+  variants                    product_variants[]
+  cart_items                  cart_items[]
+  order_items                 order_items[]
   @@index([category_id])
 }
 
 model reviews {
-  id         Int       @id @default(autoincrement())
-  product_id Int
-  user_id    Int
-  rating     Int       @db.TinyInt
-  comment    String?   @db.Text
-  created_at DateTime  @default(now())
-  product    products  @relation(fields: [product_id], references: [id], onDelete: Cascade )
-  user       users     @relation(fields: [user_id], references: [id], onDelete: Cascade )
+  id                          Int               @id @default(autoincrement())
+  product_id                  Int
+  user_id                     Int
+  rating                      Int               @db.TinyInt
+  comment                     String?           @db.Text
+  created_at                  DateTime          @default(now())
+  product                     products          @relation(fields: [product_id], references: [id], onDelete: Cascade )
+  user                        users             @relation(fields: [user_id], references: [id], onDelete: Cascade )
   @@unique([product_id, user_id])
   @@index([product_id])
 }
 
 model product_images {
-  id         Int      @id @default(autoincrement())
-  product_id Int
-  image_url  String   @db.VarChar(500)
-  public_id  String   @db.VarChar(255)
-  is_primary Boolean  @default(false)
-  product    products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  id                          Int               @id @default(autoincrement())
+  product_id                  Int         
+  image_url                   String            @db.VarChar(500)
+  public_id                   String            @db.VarChar(255)
+  is_primary                  Boolean           @default(false)
+  product                     products          @relation(fields: [product_id], references: [id], onDelete: Cascade)
   @@index([product_id])
 }
 
 model product_variants {
-  id         Int      @id @default(autoincrement())
-  product_id Int
-  size_name  String   @db.VarChar(50)
-  color      String   @db.VarChar(50)
-  stock      Int      @default(0)
-  product    products @relation(fields: [product_id], references: [id], onDelete: Cascade)
-  cart_items cart_items[]
-  order_items order_items[]
+  id                          Int               @id @default(autoincrement())
+  product_id                  Int         
+  size_name                   String            @db.VarChar(50)
+  color                       String            @db.VarChar(50)
+  stock                       Int               @default(0)
+  product                     products          @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  cart_items                  cart_items[]
+  order_items                 order_items[]
   @@unique([product_id, size_name, color])
   @@index([product_id])
 }
 
 //cart related tables
 model cart {
-  id         Int      @id @default(autoincrement())
-  user_id    Int      @unique
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade )
-  items      cart_items[]
+  id                          Int               @id @default(autoincrement())
+  user_id                     Int               @unique
+  created_at                  DateTime          @default(now())
+  updated_at                  DateTime          @updatedAt
+  user                        users             @relation(fields: [user_id], references: [id], onDelete: Cascade )
+  items                       cart_items[]
 }
 
 model cart_items {
-  id                 Int               @id @default(autoincrement())
-  cart_id            Int
-  product_id         Int
-  product_variant_id Int?
-  quantity           Int               @default(1)
-  cart               cart              @relation(fields: [cart_id], references: [id], onDelete: Cascade )
-  product            products          @relation( fields: [product_id], references: [id], onDelete: Cascade )
-  product_variant    product_variants? @relation( fields: [product_variant_id], references: [id], onDelete: SetNull )
+  id                          Int               @id @default(autoincrement())
+  cart_id                     Int
+  product_id                  Int
+  product_variant_id          Int?
+  quantity                    Int               @default(1)
+  cart                        cart              @relation(fields: [cart_id], references: [id], onDelete: Cascade )
+  product                     products          @relation( fields: [product_id], references: [id], onDelete: Cascade )
+  product_variant             product_variants? @relation( fields: [product_variant_id], references: [id], onDelete: SetNull )
   @@unique([cart_id, product_id, product_variant_id])
   @@index([cart_id])
 }
@@ -184,42 +187,40 @@ model cart_items {
 // order related table
 model orders {
   id Int @id @default(autoincrement())
-
   user_id Int
-
   // Shipping snapshot
-  shipping_full_name   String  @db.VarChar(100)
-  shipping_phone       String  @db.VarChar(20)
-  shipping_street      String  @db.VarChar(255)
-  shipping_city        String  @db.VarChar(100)
-  shipping_state       String? @db.VarChar(100)
-  shipping_country     String  @db.VarChar(100)
-  shipping_postal_code String? @db.VarChar(20)
-  status         OrderStatus @default(pending)
-  payment_status PaymentStatus @default(unpaid)
-  payment_method PaymentMethod
-  subtotal     Decimal @db.Decimal(10, 2)
-  discount     Decimal @default(0.00) @db.Decimal(10, 2)
-  tax          Decimal @default(0.00) @db.Decimal(10, 2)
-  shipping_fee Decimal @default(0.00) @db.Decimal(10, 2)
-  total_amount Decimal @db.Decimal(10, 2)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  user  users        @relation( fields: [user_id], references: [id], onDelete: Cascade )
-  items order_items[]
+  shipping_full_name          String          @db.VarChar(100)
+  shipping_phone              String          @db.VarChar(20)
+  shipping_street             String          @db.VarChar(255)
+  shipping_city               String          @db.VarChar(100)
+  shipping_state              String?         @db.VarChar(100)
+  shipping_country            String          @db.VarChar(100)
+  shipping_postal_code        String?         @db.VarChar(20)
+  status                      OrderStatus     @default(pending)
+  payment_status              PaymentStatus   @default(unpaid)
+  payment_method              PaymentMethod
+  subtotal                    Decimal         @db.Decimal(10, 2)
+  discount                    Decimal         @default(0.00) @db.Decimal(10, 2)
+  tax                         Decimal         @default(0.00) @db.Decimal(10, 2)
+  shipping_fee                Decimal         @default(0.00) @db.Decimal(10, 2)
+  total_amount                Decimal         @db.Decimal(10, 2)
+  created_at                  DateTime        @default(now())
+  updated_at                  DateTime        @updatedAt
+  user                        users           @relation( fields: [user_id], references: [id], onDelete: Cascade )
+  items                       order_items[]
   @@index([user_id])
 }
 
 model order_items {
-  id                 Int      @id @default(autoincrement())
-  order_id           Int
-  product_id         Int
-  product_variant_id Int?
-  quantity           Int
-  price              Decimal  @db.Decimal(10, 2)
-  order orders @relation( fields: [order_id], references: [id], onDelete: Cascade )
-  product products @relation( fields: [product_id], references: [id], onDelete: Restrict )
-  product_variant product_variants? @relation( fields: [product_variant_id], references: [id], onDelete: SetNull )
+  id                          Int             @id @default(autoincrement())
+  order_id                    Int
+  product_id                  Int
+  product_variant_id          Int?
+  quantity                    Int
+  price                       Decimal           @db.Decimal(10, 2)
+  order                       orders            @relation( fields: [order_id], references: [id], onDelete: Cascade )
+  product                     products          @relation( fields: [product_id], references: [id], onDelete: Restrict )
+  product_variant             product_variants? @relation( fields: [product_variant_id], references: [id], onDelete: SetNull )
   @@unique([order_id, product_id, product_variant_id])
   @@index([order_id])
   @@index([product_id])
@@ -227,15 +228,31 @@ model order_items {
 
 //notifications
 model notifications {
-  id          Int      @id @default(autoincrement())
-  user_id     Int
-  type        String   @db.VarChar(50)
-  title       String   @db.VarChar(255)
-  message     String   @db.VarChar(500)
-  is_read     Boolean  @default(false)
-  entity_type String?  @db.VarChar(50)
-  entity_id   Int?
-  created_at  DateTime @default(now())
-  user users @relation( fields: [user_id], references: [id], onDelete: Cascade )
+  id                        Int             @id @default(autoincrement())
+  user_id                   Int       
+  type                      String          @db.VarChar(50)
+  title                     String          @db.VarChar(255)
+  message                   String          @db.VarChar(500)
+  is_read                   Boolean         @default(false)
+  entity_type               String?         @db.VarChar(50)
+  entity_id                 Int?        
+  created_at                DateTime        @default(now())
+  user                      users           @relation( fields: [user_id], references: [id], onDelete: Cascade )
   @@index([user_id, is_read])
+}
+
+//audit logs tables
+model audit_logs {
+  id                       Int      @id @default(autoincrement())
+  user_id                  Int?
+  action                   String   @db.VarChar(100)
+  entity_type              String   @db.VarChar(50)
+  entity_id                Int
+  details                  Json?
+  ip_address               String?  @db.VarChar(45)
+  created_at               DateTime @default(now())
+  user                     users?   @relation( fields: [user_id], references: [id], onDelete: SetNull )
+  @@index([entity_type, entity_id])
+  @@index([user_id])
+  @@index([created_at])
 }

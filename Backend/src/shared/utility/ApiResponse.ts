@@ -1,6 +1,6 @@
-export class ApiResponse {
+export class ApiResponse <T>{
   statusCode:number;
-  data: object | [] | null;
+  data: T | null;
   message: string;
   success:boolean;
 

@@ -29,16 +29,16 @@
     "json2csv": "^6.0.0-alpha.2",
     "mailgen": "^2.0.34",
     "mailtrap": "^4.6.1",
-    "multer": "^2.2.0",
     "mysql2": "^3.22.5",
-    "nodemailer": "^9.0.3",
     "nodemon": "^3.1.14",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.2.0",
     "@types/node": "^26.2.0",
+    "@types/nodemailer": "^6.4.24",
     "prisma": "^7.9.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^7.0.2"

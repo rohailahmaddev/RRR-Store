@@ -22,3 +22,68 @@ export * from './enums.js';
  * 
  */
 export type users = Prisma.usersModel
+/**
+ * Model refresh_tokens
+ * 
+ */
+export type refresh_tokens = Prisma.refresh_tokensModel
+/**
+ * Model user_addresses
+ * 
+ */
+export type user_addresses = Prisma.user_addressesModel
+/**
+ * Model categories
+ * 
+ */
+export type categories = Prisma.categoriesModel
+/**
+ * Model products
+ * 
+ */
+export type products = Prisma.productsModel
+/**
+ * Model reviews
+ * 
+ */
+export type reviews = Prisma.reviewsModel
+/**
+ * Model product_images
+ * 
+ */
+export type product_images = Prisma.product_imagesModel
+/**
+ * Model product_variants
+ * 
+ */
+export type product_variants = Prisma.product_variantsModel
+/**
+ * Model cart
+ * 
+ */
+export type cart = Prisma.cartModel
+/**
+ * Model cart_items
+ * 
+ */
+export type cart_items = Prisma.cart_itemsModel
+/**
+ * Model orders
+ * 
+ */
+export type orders = Prisma.ordersModel
+/**
+ * Model order_items
+ * 
+ */
+export type order_items = Prisma.order_itemsModel
+/**
+ * Model notifications
+ * 
+ */
+export type notifications = Prisma.notificationsModel
+/**
+ * Model audit_logs
+ * 
+ */
+export type audit_logs = Prisma.audit_logsModel

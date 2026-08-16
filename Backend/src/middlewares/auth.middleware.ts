@@ -1,10 +1,11 @@
 import type { NextFunction, Request, Response } from "express";
-import { prisma } from "../config/prisma.js";
-import {ApiError} from "../shared/error/ApiError.js";
-import { asyncHandler } from "../shared/utility/AsyncHandler.js";
+import { prisma } from "../config/database.js";
+import {ApiError} from "../shared/utility/ApiError.js";
+import { asyncHandler } from "../shared/utility/asyncHandler.js";
 import jwt from "jsonwebtoken";
 import { AccessTokenPayload } from "../shared/types/index.types.js";
 import { userSelect } from "../shared/types/auth.types.js";
+import { env } from "../config/env.js";
 
 export const verifyJWT = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
 
@@ -17,7 +18,7 @@ export const verifyJWT = asyncHandler(async (req: Request, res: Response, next: 
   let decoded: AccessTokenPayload;
   try {
 
-    decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as AccessTokenPayload;
+    decoded = jwt.verify(token, env.ACCESS_TOKEN_SECRET as string) as AccessTokenPayload;
 
   } catch (error) {
   
