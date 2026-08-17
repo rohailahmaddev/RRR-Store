@@ -4,22 +4,23 @@ import { deleteFromCloudinary, uploadOnCloudinary } from "../../infrastructure/s
 import { getAccessToken, getRefreshToken } from "../auth/jwt.js";
 import crypto from "crypto"
 import { prisma } from "../../config/database.js";
-import { userSelect } from "../types/index.types.js";
+import { cartItem, cartItemList, userSelect } from "../types/index.types.js";
 import { env } from "../../config/env.js";
 import { Decimal, TransactionClient } from "../../generated/prisma/internal/prismaNamespace.js";
 import bcrypt from "bcrypt";
+import { getErrorMessage } from "./tryCatchError.js";
 
 export const hashToken = (token:string):string => {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
 export const hashPassword = async (password:string):Promise<string> => {
-  const hashedPassword:string = await bcrypt.hash(password,10)
+  const hashedPassword = await bcrypt.hash(password,10)
   return hashedPassword;
 }
 
 export const comparePassword = async (newPassword:string, userPassword:string):Promise<boolean> => {
-  const isPassword:boolean = await bcrypt.compare(newPassword,userPassword)
+  const isPassword = await bcrypt.compare(newPassword,userPassword)
   return isPassword;
 }
 
@@ -55,7 +56,7 @@ export const getAccessAndRefreshToken = async (userId:number, userAgent:string, 
    })
 
   if (!user) {
-    throw new ApiError(404, `User with id ${userId} not found`);
+    throw new ApiError(404, `User with id ${userId} not found`, undefined);
   }
 
   try {
@@ -150,11 +151,22 @@ export const getCartSubtotal = async (tx:TransactionClient, cartId:number) => {
     }
   })
 
-  const subtotal = result.reduce(
-    (sum, item) => sum.plus(item.product.price.times(item.quantity)), new Decimal(0) )
-  const totalItems = result.reduce((sum, item) => sum + item.quantity, 0)
+  const subTotal = calculateSubTotal(result)
+  const totalItems = calculateQuantity(result)
 
-  return { subtotal, totalItems };
+  return { subTotal, totalItems };
+}
+
+export const calculateSubTotal = (result:cartItemList) => {
+  const subtotal = result.reduce(
+    (sum, item) => sum.plus(item.product.price.times(item.quantity)), new Decimal(0) 
+  ).toNumber()
+  return subtotal;
+}
+
+export const calculateQuantity = (result:cartItemList) => {
+  const totalItems = result.reduce((sum, item) => sum + item.quantity, 0)
+  return totalItems;
 }
 
 export const validateVariantsArray = (product_variants:{stock?:number, size_name:string, color:string}[])=> {
@@ -163,9 +175,9 @@ export const validateVariantsArray = (product_variants:{stock?:number, size_name
             if (variant.stock === undefined) {
                  throw new ApiError(400, `Variant at index ${index} has an invalid or missing stock value`);
             }
-            return{
-            size_name: variant.size_name || "Standard",
-            color: variant.color || "Default",
+            return {
+            size_name: variant.size_name.trim()?variant.size_name:"Standard",
+            color: variant.color.trim()?variant.color:"Default",
             stock: variant.stock,
             };
         }): [{ size_name: "Standard", color: "Default", stock: 0 }];
@@ -177,8 +189,7 @@ export const parseJson = (ele?:string):[] => {
   try {
     Array = JSON.parse(ele || "[]");
   } catch (error) {
-    const message = error instanceof Error?error.message:String(error)
-    throw new ApiError(400, `Invalid data format ${message}`);
+    throw new ApiError(400, `Invalid data format ${getErrorMessage(error)}`);
   }
 
   return Array;

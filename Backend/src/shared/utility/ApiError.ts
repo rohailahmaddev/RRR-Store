@@ -1,21 +1,22 @@
 export class ApiError extends Error {
   statusCode: number;
-  code:string;
-  data: null;
-  errors: unknown[];
+  message:string;
+  code:string | null;
+  data: null ;
+  errors: unknown[] | undefined;
 
   constructor(
     statusCode:number,
-    code:string,
     message = "Something went wrong",
+    code:string | null =null,
     errors:unknown[] = [],
     stack = ""
 ) {
     super(message);
     this.statusCode = statusCode;
+    this.message = message;
     this.code = code;
     this.data = null;
-    this.message = message;
     this.errors = errors;
 
     if (stack) {

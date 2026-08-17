@@ -5,6 +5,7 @@ import { verificationMailGenerator } from "./email.templates.js"
 import { transporter } from "./email.config.js";
 import { ApiError } from "../../shared/utility/ApiError.js";
 import { sendMailUser } from "./email.types.js";
+import { getErrorMessage } from "../../shared/utility/tryCatchError.js";
 
 
 const sendEmail = async ( options:emailOption ) => {
@@ -20,8 +21,6 @@ const sendEmail = async ( options:emailOption ) => {
   const emailTextual = mailGenerator.generatePlaintext(options.mailgenContent)
   const emailHTML = mailGenerator.generate(options.mailgenContent)
 
-
-
   try {
     await transporter.sendMail({
       from: "https://3rstore.com",
@@ -31,8 +30,7 @@ const sendEmail = async ( options:emailOption ) => {
       html: emailHTML
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    throw new ApiError(500, `Failed to send email. ${message}`);
+    throw new ApiError(500, `Failed to send email. ${getErrorMessage(error)}`);
   }
   
 };
@@ -49,7 +47,6 @@ export const sendVerificationEmail = async (user:sendMailUser, req:Request, unHa
         ),
       })
     } catch (error) {
-      const message = error instanceof Error ? error.message: String(error)
-      throw new ApiError(500, `Failed to send verification email. ${message}`)
+      throw new ApiError(500, `Failed to send verification email. ${getErrorMessage(error)}`)
     }
 }

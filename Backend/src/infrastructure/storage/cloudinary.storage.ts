@@ -1,6 +1,8 @@
 import fs from "fs"
 import cloudinary from "../../config/cloudinary.js"
 import { UploadApiResponse } from "cloudinary";
+import { getErrorMessage } from "../../shared/utility/tryCatchError.js";
+import { ApiError } from "../../shared/utility/ApiError.js";
 
 const deleteLocalFile = (filePath : string) => {
     try {
@@ -12,9 +14,8 @@ const deleteLocalFile = (filePath : string) => {
     }
 }
 
-const uploadOnCloudinary = async (localFilePath:string) : Promise<UploadApiResponse | null> => {
+const uploadOnCloudinary = async (localFilePath:string) : Promise<UploadApiResponse> => {
     try {
-        if(!localFilePath) return null
         const response = await cloudinary.uploader.upload(
             localFilePath,{
                 resource_type:"auto"
@@ -29,10 +30,8 @@ const uploadOnCloudinary = async (localFilePath:string) : Promise<UploadApiRespo
         return response
        
     } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        console.error("Cloudinary upload failed:", message)
         deleteLocalFile(localFilePath)
-        return null
+        throw new ApiError(502,`Cloudinary upload failed ${getErrorMessage(error)}`)
     }
 }
 
@@ -41,7 +40,7 @@ const deleteFromCloudinary = async (publicId : string) => {
     try {
         await cloudinary.uploader.destroy(publicId)
     } catch (error) {
-        return null
+        throw new ApiError(501, `Failed to delete image. ${getErrorMessage(error)}`)
     }
 }
 

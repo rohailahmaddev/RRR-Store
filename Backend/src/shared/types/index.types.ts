@@ -1,6 +1,6 @@
 import Mailgen from "mailgen";
-
 import { Prisma } from "../../generated/prisma/client.js";
+import { Decimal } from "@prisma/client/runtime/client";
 
 export const userSelect = {
   id: true,
@@ -45,5 +45,14 @@ export interface emailOption {
   subject:string,
   mailgenContent:Mailgen.Content
 }
+
+export interface cartItem {
+ quantity: number;
+ product: {
+ price: Decimal ;
+ };
+}
+
+export type cartItemList = cartItem[]
 
 export {};
