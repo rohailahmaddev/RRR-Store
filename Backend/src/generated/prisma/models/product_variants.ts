@@ -224,9 +224,9 @@ export type product_variantsWhereInput = {
   size_name?: Prisma.StringFilter<"product_variants"> | string
   color?: Prisma.StringFilter<"product_variants"> | string
   stock?: Prisma.IntFilter<"product_variants"> | number
-  product?: Prisma.XOR<Prisma.ProductsScalarRelationFilter, Prisma.productsWhereInput>
   cart_items?: Prisma.Cart_itemsListRelationFilter
   order_items?: Prisma.Order_itemsListRelationFilter
+  product?: Prisma.XOR<Prisma.ProductsScalarRelationFilter, Prisma.productsWhereInput>
 }
 
 export type product_variantsOrderByWithRelationInput = {
@@ -235,9 +235,9 @@ export type product_variantsOrderByWithRelationInput = {
   size_name?: Prisma.SortOrder
   color?: Prisma.SortOrder
   stock?: Prisma.SortOrder
-  product?: Prisma.productsOrderByWithRelationInput
   cart_items?: Prisma.cart_itemsOrderByRelationAggregateInput
   order_items?: Prisma.order_itemsOrderByRelationAggregateInput
+  product?: Prisma.productsOrderByWithRelationInput
   _relevance?: Prisma.product_variantsOrderByRelevanceInput
 }
 
@@ -251,9 +251,9 @@ export type product_variantsWhereUniqueInput = Prisma.AtLeast<{
   size_name?: Prisma.StringFilter<"product_variants"> | string
   color?: Prisma.StringFilter<"product_variants"> | string
   stock?: Prisma.IntFilter<"product_variants"> | number
-  product?: Prisma.XOR<Prisma.ProductsScalarRelationFilter, Prisma.productsWhereInput>
   cart_items?: Prisma.Cart_itemsListRelationFilter
   order_items?: Prisma.Order_itemsListRelationFilter
+  product?: Prisma.XOR<Prisma.ProductsScalarRelationFilter, Prisma.productsWhereInput>
 }, "id" | "product_id_size_name_color">
 
 export type product_variantsOrderByWithAggregationInput = {
@@ -284,9 +284,9 @@ export type product_variantsCreateInput = {
   size_name: string
   color: string
   stock?: number
-  product: Prisma.productsCreateNestedOneWithoutVariantsInput
   cart_items?: Prisma.cart_itemsCreateNestedManyWithoutProduct_variantInput
   order_items?: Prisma.order_itemsCreateNestedManyWithoutProduct_variantInput
+  product: Prisma.productsCreateNestedOneWithoutVariantsInput
 }
 
 export type product_variantsUncheckedCreateInput = {
@@ -303,9 +303,9 @@ export type product_variantsUpdateInput = {
   size_name?: Prisma.StringFieldUpdateOperationsInput | string
   color?: Prisma.StringFieldUpdateOperationsInput | string
   stock?: Prisma.IntFieldUpdateOperationsInput | number
-  product?: Prisma.productsUpdateOneRequiredWithoutVariantsNestedInput
   cart_items?: Prisma.cart_itemsUpdateManyWithoutProduct_variantNestedInput
   order_items?: Prisma.order_itemsUpdateManyWithoutProduct_variantNestedInput
+  product?: Prisma.productsUpdateOneRequiredWithoutVariantsNestedInput
 }
 
 export type product_variantsUncheckedUpdateInput = {
@@ -535,8 +535,8 @@ export type product_variantsCreateWithoutCart_itemsInput = {
   size_name: string
   color: string
   stock?: number
-  product: Prisma.productsCreateNestedOneWithoutVariantsInput
   order_items?: Prisma.order_itemsCreateNestedManyWithoutProduct_variantInput
+  product: Prisma.productsCreateNestedOneWithoutVariantsInput
 }
 
 export type product_variantsUncheckedCreateWithoutCart_itemsInput = {
@@ -568,8 +568,8 @@ export type product_variantsUpdateWithoutCart_itemsInput = {
   size_name?: Prisma.StringFieldUpdateOperationsInput | string
   color?: Prisma.StringFieldUpdateOperationsInput | string
   stock?: Prisma.IntFieldUpdateOperationsInput | number
-  product?: Prisma.productsUpdateOneRequiredWithoutVariantsNestedInput
   order_items?: Prisma.order_itemsUpdateManyWithoutProduct_variantNestedInput
+  product?: Prisma.productsUpdateOneRequiredWithoutVariantsNestedInput
 }
 
 export type product_variantsUncheckedUpdateWithoutCart_itemsInput = {
@@ -585,8 +585,8 @@ export type product_variantsCreateWithoutOrder_itemsInput = {
   size_name: string
   color: string
   stock?: number
-  product: Prisma.productsCreateNestedOneWithoutVariantsInput
   cart_items?: Prisma.cart_itemsCreateNestedManyWithoutProduct_variantInput
+  product: Prisma.productsCreateNestedOneWithoutVariantsInput
 }
 
 export type product_variantsUncheckedCreateWithoutOrder_itemsInput = {
@@ -618,8 +618,8 @@ export type product_variantsUpdateWithoutOrder_itemsInput = {
   size_name?: Prisma.StringFieldUpdateOperationsInput | string
   color?: Prisma.StringFieldUpdateOperationsInput | string
   stock?: Prisma.IntFieldUpdateOperationsInput | number
-  product?: Prisma.productsUpdateOneRequiredWithoutVariantsNestedInput
   cart_items?: Prisma.cart_itemsUpdateManyWithoutProduct_variantNestedInput
+  product?: Prisma.productsUpdateOneRequiredWithoutVariantsNestedInput
 }
 
 export type product_variantsUncheckedUpdateWithoutOrder_itemsInput = {
@@ -708,9 +708,9 @@ export type product_variantsSelect<ExtArgs extends runtime.Types.Extensions.Inte
   size_name?: boolean
   color?: boolean
   stock?: boolean
-  product?: boolean | Prisma.productsDefaultArgs<ExtArgs>
   cart_items?: boolean | Prisma.product_variants$cart_itemsArgs<ExtArgs>
   order_items?: boolean | Prisma.product_variants$order_itemsArgs<ExtArgs>
+  product?: boolean | Prisma.productsDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.Product_variantsCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["product_variants"]>
 
@@ -726,18 +726,18 @@ export type product_variantsSelectScalar = {
 
 export type product_variantsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "product_id" | "size_name" | "color" | "stock", ExtArgs["result"]["product_variants"]>
 export type product_variantsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  product?: boolean | Prisma.productsDefaultArgs<ExtArgs>
   cart_items?: boolean | Prisma.product_variants$cart_itemsArgs<ExtArgs>
   order_items?: boolean | Prisma.product_variants$order_itemsArgs<ExtArgs>
+  product?: boolean | Prisma.productsDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.Product_variantsCountOutputTypeDefaultArgs<ExtArgs>
 }
 
 export type $product_variantsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "product_variants"
   objects: {
-    product: Prisma.$productsPayload<ExtArgs>
     cart_items: Prisma.$cart_itemsPayload<ExtArgs>[]
     order_items: Prisma.$order_itemsPayload<ExtArgs>[]
+    product: Prisma.$productsPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1085,9 +1085,9 @@ readonly fields: product_variantsFieldRefs;
  */
 export interface Prisma__product_variantsClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  product<T extends Prisma.productsDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.productsDefaultArgs<ExtArgs>>): Prisma.Prisma__productsClient<runtime.Types.Result.GetResult<Prisma.$productsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   cart_items<T extends Prisma.product_variants$cart_itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.product_variants$cart_itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$cart_itemsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   order_items<T extends Prisma.product_variants$order_itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.product_variants$order_itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$order_itemsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  product<T extends Prisma.productsDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.productsDefaultArgs<ExtArgs>>): Prisma.Prisma__productsClient<runtime.Types.Result.GetResult<Prisma.$productsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.

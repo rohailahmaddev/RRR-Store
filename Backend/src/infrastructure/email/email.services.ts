@@ -1,7 +1,7 @@
 import Mailgen from "mailgen";
 import type { Request } from "express";
 import { emailOption } from "../../shared/types/index.types.js";
-import { verificationMailGenerator } from "./email.templates.js"
+import { passwordResetMailGenerator, verificationMailGenerator } from "./email.templates.js"
 import { transporter } from "./email.config.js";
 import { ApiError } from "../../shared/utility/ApiError.js";
 import { sendMailUser } from "./email.types.js";
@@ -43,10 +43,26 @@ export const sendVerificationEmail = async (user:sendMailUser, req:Request, unHa
         subject: "Please verify your email",
         mailgenContent: verificationMailGenerator(
           user?.full_name,
-          `${req.protocol}://${req.get("host")}/api/user/verify-email/${unHashedToken}`
+          `${req.protocol}://${req.get("host")}/api/auth/verify-email/${unHashedToken}`
         ),
       })
     } catch (error) {
       throw new ApiError(500, `Failed to send verification email. ${getErrorMessage(error)}`)
     }
 }
+
+export const sendFogotPasswordEmail = async (user:sendMailUser, req:Request, unHashedToken:string) => {
+    try {
+      await sendEmail({
+        email: user?.email,
+        subject: "Please reset your password.",
+        mailgenContent: passwordResetMailGenerator(
+          user?.full_name,
+          `${req.protocol}://${req.get("host")}/api/auth/reset-password/${unHashedToken}`
+        ),
+      })
+    } catch (error) {
+      throw new ApiError(500, `Failed to reset password email. ${getErrorMessage(error)}`)
+    }
+}
+

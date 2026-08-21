@@ -9,7 +9,7 @@ import { env } from "../config/env.js";
 
 export const verifyJWT = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
 
-  const token = req.cookies?.access_token || req.header("Authorization")?.replace("Bearer ", "");
+  const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
 
   if (!token) {
       throw new ApiError(401, "Unauthorized request.");

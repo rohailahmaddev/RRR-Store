@@ -46,6 +46,7 @@ export type Refresh_tokensMinAggregateOutputType = {
   ip_address: string | null
   is_revoked: boolean | null
   replaced_by: number | null
+  expire_at: Date | null
   created_at: Date | null
 }
 
@@ -57,6 +58,7 @@ export type Refresh_tokensMaxAggregateOutputType = {
   ip_address: string | null
   is_revoked: boolean | null
   replaced_by: number | null
+  expire_at: Date | null
   created_at: Date | null
 }
 
@@ -68,6 +70,7 @@ export type Refresh_tokensCountAggregateOutputType = {
   ip_address: number
   is_revoked: number
   replaced_by: number
+  expire_at: number
   created_at: number
   _all: number
 }
@@ -93,6 +96,7 @@ export type Refresh_tokensMinAggregateInputType = {
   ip_address?: true
   is_revoked?: true
   replaced_by?: true
+  expire_at?: true
   created_at?: true
 }
 
@@ -104,6 +108,7 @@ export type Refresh_tokensMaxAggregateInputType = {
   ip_address?: true
   is_revoked?: true
   replaced_by?: true
+  expire_at?: true
   created_at?: true
 }
 
@@ -115,6 +120,7 @@ export type Refresh_tokensCountAggregateInputType = {
   ip_address?: true
   is_revoked?: true
   replaced_by?: true
+  expire_at?: true
   created_at?: true
   _all?: true
 }
@@ -213,6 +219,7 @@ export type Refresh_tokensGroupByOutputType = {
   ip_address: string | null
   is_revoked: boolean
   replaced_by: number | null
+  expire_at: Date
   created_at: Date
   _count: Refresh_tokensCountAggregateOutputType | null
   _avg: Refresh_tokensAvgAggregateOutputType | null
@@ -247,10 +254,11 @@ export type refresh_tokensWhereInput = {
   ip_address?: Prisma.StringNullableFilter<"refresh_tokens"> | string | null
   is_revoked?: Prisma.BoolFilter<"refresh_tokens"> | boolean
   replaced_by?: Prisma.IntNullableFilter<"refresh_tokens"> | number | null
+  expire_at?: Prisma.DateTimeFilter<"refresh_tokens"> | Date | string
   created_at?: Prisma.DateTimeFilter<"refresh_tokens"> | Date | string
-  user?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
   replaced?: Prisma.XOR<Prisma.Refresh_tokensNullableScalarRelationFilter, Prisma.refresh_tokensWhereInput> | null
   replacementFor?: Prisma.Refresh_tokensListRelationFilter
+  user?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
 }
 
 export type refresh_tokensOrderByWithRelationInput = {
@@ -261,10 +269,11 @@ export type refresh_tokensOrderByWithRelationInput = {
   ip_address?: Prisma.SortOrderInput | Prisma.SortOrder
   is_revoked?: Prisma.SortOrder
   replaced_by?: Prisma.SortOrderInput | Prisma.SortOrder
+  expire_at?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
-  user?: Prisma.usersOrderByWithRelationInput
   replaced?: Prisma.refresh_tokensOrderByWithRelationInput
   replacementFor?: Prisma.refresh_tokensOrderByRelationAggregateInput
+  user?: Prisma.usersOrderByWithRelationInput
   _relevance?: Prisma.refresh_tokensOrderByRelevanceInput
 }
 
@@ -279,10 +288,11 @@ export type refresh_tokensWhereUniqueInput = Prisma.AtLeast<{
   ip_address?: Prisma.StringNullableFilter<"refresh_tokens"> | string | null
   is_revoked?: Prisma.BoolFilter<"refresh_tokens"> | boolean
   replaced_by?: Prisma.IntNullableFilter<"refresh_tokens"> | number | null
+  expire_at?: Prisma.DateTimeFilter<"refresh_tokens"> | Date | string
   created_at?: Prisma.DateTimeFilter<"refresh_tokens"> | Date | string
-  user?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
   replaced?: Prisma.XOR<Prisma.Refresh_tokensNullableScalarRelationFilter, Prisma.refresh_tokensWhereInput> | null
   replacementFor?: Prisma.Refresh_tokensListRelationFilter
+  user?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
 }, "id">
 
 export type refresh_tokensOrderByWithAggregationInput = {
@@ -293,6 +303,7 @@ export type refresh_tokensOrderByWithAggregationInput = {
   ip_address?: Prisma.SortOrderInput | Prisma.SortOrder
   is_revoked?: Prisma.SortOrder
   replaced_by?: Prisma.SortOrderInput | Prisma.SortOrder
+  expire_at?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   _count?: Prisma.refresh_tokensCountOrderByAggregateInput
   _avg?: Prisma.refresh_tokensAvgOrderByAggregateInput
@@ -312,6 +323,7 @@ export type refresh_tokensScalarWhereWithAggregatesInput = {
   ip_address?: Prisma.StringNullableWithAggregatesFilter<"refresh_tokens"> | string | null
   is_revoked?: Prisma.BoolWithAggregatesFilter<"refresh_tokens"> | boolean
   replaced_by?: Prisma.IntNullableWithAggregatesFilter<"refresh_tokens"> | number | null
+  expire_at?: Prisma.DateTimeWithAggregatesFilter<"refresh_tokens"> | Date | string
   created_at?: Prisma.DateTimeWithAggregatesFilter<"refresh_tokens"> | Date | string
 }
 
@@ -320,10 +332,11 @@ export type refresh_tokensCreateInput = {
   user_agent?: string | null
   ip_address?: string | null
   is_revoked?: boolean
+  expire_at: Date | string
   created_at?: Date | string
-  user: Prisma.usersCreateNestedOneWithoutRefresh_tokensInput
   replaced?: Prisma.refresh_tokensCreateNestedOneWithoutReplacementForInput
   replacementFor?: Prisma.refresh_tokensCreateNestedManyWithoutReplacedInput
+  user: Prisma.usersCreateNestedOneWithoutRefresh_tokensInput
 }
 
 export type refresh_tokensUncheckedCreateInput = {
@@ -334,6 +347,7 @@ export type refresh_tokensUncheckedCreateInput = {
   ip_address?: string | null
   is_revoked?: boolean
   replaced_by?: number | null
+  expire_at: Date | string
   created_at?: Date | string
   replacementFor?: Prisma.refresh_tokensUncheckedCreateNestedManyWithoutReplacedInput
 }
@@ -343,10 +357,11 @@ export type refresh_tokensUpdateInput = {
   user_agent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   is_revoked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  expire_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.usersUpdateOneRequiredWithoutRefresh_tokensNestedInput
   replaced?: Prisma.refresh_tokensUpdateOneWithoutReplacementForNestedInput
   replacementFor?: Prisma.refresh_tokensUpdateManyWithoutReplacedNestedInput
+  user?: Prisma.usersUpdateOneRequiredWithoutRefresh_tokensNestedInput
 }
 
 export type refresh_tokensUncheckedUpdateInput = {
@@ -357,6 +372,7 @@ export type refresh_tokensUncheckedUpdateInput = {
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   is_revoked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replaced_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expire_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   replacementFor?: Prisma.refresh_tokensUncheckedUpdateManyWithoutReplacedNestedInput
 }
@@ -369,6 +385,7 @@ export type refresh_tokensCreateManyInput = {
   ip_address?: string | null
   is_revoked?: boolean
   replaced_by?: number | null
+  expire_at: Date | string
   created_at?: Date | string
 }
 
@@ -377,6 +394,7 @@ export type refresh_tokensUpdateManyMutationInput = {
   user_agent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   is_revoked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  expire_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -388,6 +406,7 @@ export type refresh_tokensUncheckedUpdateManyInput = {
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   is_revoked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replaced_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expire_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -420,6 +439,7 @@ export type refresh_tokensCountOrderByAggregateInput = {
   ip_address?: Prisma.SortOrder
   is_revoked?: Prisma.SortOrder
   replaced_by?: Prisma.SortOrder
+  expire_at?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
 }
 
@@ -437,6 +457,7 @@ export type refresh_tokensMaxOrderByAggregateInput = {
   ip_address?: Prisma.SortOrder
   is_revoked?: Prisma.SortOrder
   replaced_by?: Prisma.SortOrder
+  expire_at?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
 }
 
@@ -448,6 +469,7 @@ export type refresh_tokensMinOrderByAggregateInput = {
   ip_address?: Prisma.SortOrder
   is_revoked?: Prisma.SortOrder
   replaced_by?: Prisma.SortOrder
+  expire_at?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
 }
 
@@ -570,6 +592,7 @@ export type refresh_tokensCreateWithoutUserInput = {
   user_agent?: string | null
   ip_address?: string | null
   is_revoked?: boolean
+  expire_at: Date | string
   created_at?: Date | string
   replaced?: Prisma.refresh_tokensCreateNestedOneWithoutReplacementForInput
   replacementFor?: Prisma.refresh_tokensCreateNestedManyWithoutReplacedInput
@@ -582,6 +605,7 @@ export type refresh_tokensUncheckedCreateWithoutUserInput = {
   ip_address?: string | null
   is_revoked?: boolean
   replaced_by?: number | null
+  expire_at: Date | string
   created_at?: Date | string
   replacementFor?: Prisma.refresh_tokensUncheckedCreateNestedManyWithoutReplacedInput
 }
@@ -623,6 +647,7 @@ export type refresh_tokensScalarWhereInput = {
   ip_address?: Prisma.StringNullableFilter<"refresh_tokens"> | string | null
   is_revoked?: Prisma.BoolFilter<"refresh_tokens"> | boolean
   replaced_by?: Prisma.IntNullableFilter<"refresh_tokens"> | number | null
+  expire_at?: Prisma.DateTimeFilter<"refresh_tokens"> | Date | string
   created_at?: Prisma.DateTimeFilter<"refresh_tokens"> | Date | string
 }
 
@@ -631,9 +656,10 @@ export type refresh_tokensCreateWithoutReplacementForInput = {
   user_agent?: string | null
   ip_address?: string | null
   is_revoked?: boolean
+  expire_at: Date | string
   created_at?: Date | string
-  user: Prisma.usersCreateNestedOneWithoutRefresh_tokensInput
   replaced?: Prisma.refresh_tokensCreateNestedOneWithoutReplacementForInput
+  user: Prisma.usersCreateNestedOneWithoutRefresh_tokensInput
 }
 
 export type refresh_tokensUncheckedCreateWithoutReplacementForInput = {
@@ -644,6 +670,7 @@ export type refresh_tokensUncheckedCreateWithoutReplacementForInput = {
   ip_address?: string | null
   is_revoked?: boolean
   replaced_by?: number | null
+  expire_at: Date | string
   created_at?: Date | string
 }
 
@@ -657,9 +684,10 @@ export type refresh_tokensCreateWithoutReplacedInput = {
   user_agent?: string | null
   ip_address?: string | null
   is_revoked?: boolean
+  expire_at: Date | string
   created_at?: Date | string
-  user: Prisma.usersCreateNestedOneWithoutRefresh_tokensInput
   replacementFor?: Prisma.refresh_tokensCreateNestedManyWithoutReplacedInput
+  user: Prisma.usersCreateNestedOneWithoutRefresh_tokensInput
 }
 
 export type refresh_tokensUncheckedCreateWithoutReplacedInput = {
@@ -669,6 +697,7 @@ export type refresh_tokensUncheckedCreateWithoutReplacedInput = {
   user_agent?: string | null
   ip_address?: string | null
   is_revoked?: boolean
+  expire_at: Date | string
   created_at?: Date | string
   replacementFor?: Prisma.refresh_tokensUncheckedCreateNestedManyWithoutReplacedInput
 }
@@ -699,9 +728,10 @@ export type refresh_tokensUpdateWithoutReplacementForInput = {
   user_agent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   is_revoked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  expire_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.usersUpdateOneRequiredWithoutRefresh_tokensNestedInput
   replaced?: Prisma.refresh_tokensUpdateOneWithoutReplacementForNestedInput
+  user?: Prisma.usersUpdateOneRequiredWithoutRefresh_tokensNestedInput
 }
 
 export type refresh_tokensUncheckedUpdateWithoutReplacementForInput = {
@@ -712,6 +742,7 @@ export type refresh_tokensUncheckedUpdateWithoutReplacementForInput = {
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   is_revoked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replaced_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expire_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -738,6 +769,7 @@ export type refresh_tokensCreateManyUserInput = {
   ip_address?: string | null
   is_revoked?: boolean
   replaced_by?: number | null
+  expire_at: Date | string
   created_at?: Date | string
 }
 
@@ -746,6 +778,7 @@ export type refresh_tokensUpdateWithoutUserInput = {
   user_agent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   is_revoked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  expire_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   replaced?: Prisma.refresh_tokensUpdateOneWithoutReplacementForNestedInput
   replacementFor?: Prisma.refresh_tokensUpdateManyWithoutReplacedNestedInput
@@ -758,6 +791,7 @@ export type refresh_tokensUncheckedUpdateWithoutUserInput = {
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   is_revoked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replaced_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expire_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   replacementFor?: Prisma.refresh_tokensUncheckedUpdateManyWithoutReplacedNestedInput
 }
@@ -769,6 +803,7 @@ export type refresh_tokensUncheckedUpdateManyWithoutUserInput = {
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   is_revoked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   replaced_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expire_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -779,6 +814,7 @@ export type refresh_tokensCreateManyReplacedInput = {
   user_agent?: string | null
   ip_address?: string | null
   is_revoked?: boolean
+  expire_at: Date | string
   created_at?: Date | string
 }
 
@@ -787,9 +823,10 @@ export type refresh_tokensUpdateWithoutReplacedInput = {
   user_agent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   is_revoked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  expire_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.usersUpdateOneRequiredWithoutRefresh_tokensNestedInput
   replacementFor?: Prisma.refresh_tokensUpdateManyWithoutReplacedNestedInput
+  user?: Prisma.usersUpdateOneRequiredWithoutRefresh_tokensNestedInput
 }
 
 export type refresh_tokensUncheckedUpdateWithoutReplacedInput = {
@@ -799,6 +836,7 @@ export type refresh_tokensUncheckedUpdateWithoutReplacedInput = {
   user_agent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   is_revoked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  expire_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   replacementFor?: Prisma.refresh_tokensUncheckedUpdateManyWithoutReplacedNestedInput
 }
@@ -810,6 +848,7 @@ export type refresh_tokensUncheckedUpdateManyWithoutReplacedInput = {
   user_agent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   is_revoked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  expire_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -852,10 +891,11 @@ export type refresh_tokensSelect<ExtArgs extends runtime.Types.Extensions.Intern
   ip_address?: boolean
   is_revoked?: boolean
   replaced_by?: boolean
+  expire_at?: boolean
   created_at?: boolean
-  user?: boolean | Prisma.usersDefaultArgs<ExtArgs>
   replaced?: boolean | Prisma.refresh_tokens$replacedArgs<ExtArgs>
   replacementFor?: boolean | Prisma.refresh_tokens$replacementForArgs<ExtArgs>
+  user?: boolean | Prisma.usersDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.Refresh_tokensCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["refresh_tokens"]>
 
@@ -869,23 +909,24 @@ export type refresh_tokensSelectScalar = {
   ip_address?: boolean
   is_revoked?: boolean
   replaced_by?: boolean
+  expire_at?: boolean
   created_at?: boolean
 }
 
-export type refresh_tokensOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "user_id" | "token_hash" | "user_agent" | "ip_address" | "is_revoked" | "replaced_by" | "created_at", ExtArgs["result"]["refresh_tokens"]>
+export type refresh_tokensOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "user_id" | "token_hash" | "user_agent" | "ip_address" | "is_revoked" | "replaced_by" | "expire_at" | "created_at", ExtArgs["result"]["refresh_tokens"]>
 export type refresh_tokensInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.usersDefaultArgs<ExtArgs>
   replaced?: boolean | Prisma.refresh_tokens$replacedArgs<ExtArgs>
   replacementFor?: boolean | Prisma.refresh_tokens$replacementForArgs<ExtArgs>
+  user?: boolean | Prisma.usersDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.Refresh_tokensCountOutputTypeDefaultArgs<ExtArgs>
 }
 
 export type $refresh_tokensPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "refresh_tokens"
   objects: {
-    user: Prisma.$usersPayload<ExtArgs>
     replaced: Prisma.$refresh_tokensPayload<ExtArgs> | null
     replacementFor: Prisma.$refresh_tokensPayload<ExtArgs>[]
+    user: Prisma.$usersPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -895,6 +936,7 @@ export type $refresh_tokensPayload<ExtArgs extends runtime.Types.Extensions.Inte
     ip_address: string | null
     is_revoked: boolean
     replaced_by: number | null
+    expire_at: Date
     created_at: Date
   }, ExtArgs["result"]["refresh_tokens"]>
   composites: {}
@@ -1236,9 +1278,9 @@ readonly fields: refresh_tokensFieldRefs;
  */
 export interface Prisma__refresh_tokensClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  user<T extends Prisma.usersDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.usersDefaultArgs<ExtArgs>>): Prisma.Prisma__usersClient<runtime.Types.Result.GetResult<Prisma.$usersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   replaced<T extends Prisma.refresh_tokens$replacedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.refresh_tokens$replacedArgs<ExtArgs>>): Prisma.Prisma__refresh_tokensClient<runtime.Types.Result.GetResult<Prisma.$refresh_tokensPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   replacementFor<T extends Prisma.refresh_tokens$replacementForArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.refresh_tokens$replacementForArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$refresh_tokensPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  user<T extends Prisma.usersDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.usersDefaultArgs<ExtArgs>>): Prisma.Prisma__usersClient<runtime.Types.Result.GetResult<Prisma.$usersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1275,6 +1317,7 @@ export interface refresh_tokensFieldRefs {
   readonly ip_address: Prisma.FieldRef<"refresh_tokens", 'String'>
   readonly is_revoked: Prisma.FieldRef<"refresh_tokens", 'Boolean'>
   readonly replaced_by: Prisma.FieldRef<"refresh_tokens", 'Int'>
+  readonly expire_at: Prisma.FieldRef<"refresh_tokens", 'DateTime'>
   readonly created_at: Prisma.FieldRef<"refresh_tokens", 'DateTime'>
 }
     

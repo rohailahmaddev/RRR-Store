@@ -4,14 +4,15 @@ import { deleteFromCloudinary, uploadOnCloudinary } from "../../infrastructure/s
 import { getAccessToken, getRefreshToken } from "../auth/jwt.js";
 import crypto from "crypto"
 import { prisma } from "../../config/database.js";
-import { cartItem, cartItemList, userSelect } from "../types/index.types.js";
+import { cartItemList, userSelect } from "../types/index.types.js";
 import { env } from "../../config/env.js";
 import { Decimal, TransactionClient } from "../../generated/prisma/internal/prismaNamespace.js";
 import bcrypt from "bcrypt";
 import { getErrorMessage } from "./tryCatchError.js";
+import ms from "ms"
 
-export const hashToken = (token:string):string => {
-  return crypto.createHash("sha256").update(token).digest("hex");
+export const hashToken = (token:string):string => {    
+  return crypto.createHmac("sha256",env.TEMPORARY_TOKEN_SECRET).update(token).digest("hex");
 }
 
 export const hashPassword = async (password:string):Promise<string> => {
@@ -48,7 +49,7 @@ export const revokeTokenChain = async (tokenId:number) => {
   }
 }
 
-export const getAccessAndRefreshToken = async (userId:number, userAgent:string, userIp:string, oldTokenId: number|null = null):Promise<object> => {
+export const getAccessAndRefreshToken = async (userId:number, userAgent:string, userIp:string | null, oldTokenId: number|null = null):Promise<{accessToken:string, refreshToken:string}> => {
 
   const user = await prisma.users.findUnique({
     where:{id:userId},
@@ -63,18 +64,20 @@ export const getAccessAndRefreshToken = async (userId:number, userAgent:string, 
 
     const accessToken = getAccessToken(user);
     const refreshToken = getRefreshToken(user)
+    const refreshTokenExpiryMs = ms(env.REFRESH_TOKEN_EXPIRY as any);
+    const refreshTokenExpiry = new Date(Date.now() + refreshTokenExpiryMs);
 
     const hashedRefreshToken = hashToken(refreshToken);
-    const expiresAt = env.REFRESH_TOKEN_EXPIRY;
 
     await prisma.$transaction( async (tx) => {
         const insertedRow = await tx.refresh_tokens.create({
             data:{
-                user_id:userId, 
+                user_id:userId,
                 token_hash:hashedRefreshToken, 
                 user_agent:userAgent, 
                 ip_address:userIp, 
-                expire_at:expiresAt}
+                expire_at:refreshTokenExpiry
+             }
         })
 
         // Rotation: retire the old token, point it at the new one

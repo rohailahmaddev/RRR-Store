@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { ApiError } from "../shared/utility/ApiError.js";
+import { env } from "../config/env.js";
 
 interface MySQLError extends Error {
   code?: string;
@@ -51,17 +52,17 @@ export const errorHandler = ( err: Error, req: Request, res: Response, next: Nex
       message = "Token expired";
     }
 
-    error = new ApiError(statusCode, code, message, errors, err.stack);
+    error = new ApiError(statusCode, message, code, errors, err.stack);
   }
 
   const response = {
     success: false,
     statusCode: error.statusCode,
-    code:error.code,
     message: error.message,
+    code:error.code,
     errors: error.errors,
     // Only leak stack trace in development
-    ...(process.env.NODE_ENV === "development" && { stack: error.stack }),
+    ...(env.NODE_ENV === "development" && { stack: error.stack }),
   };
 
   return res.status(error.statusCode).json(response);

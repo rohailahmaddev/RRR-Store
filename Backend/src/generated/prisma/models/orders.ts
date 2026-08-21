@@ -352,8 +352,8 @@ export type ordersWhereInput = {
   total_amount?: Prisma.DecimalFilter<"orders"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Prisma.DateTimeFilter<"orders"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"orders"> | Date | string
-  user?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
   items?: Prisma.Order_itemsListRelationFilter
+  user?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
 }
 
 export type ordersOrderByWithRelationInput = {
@@ -376,8 +376,8 @@ export type ordersOrderByWithRelationInput = {
   total_amount?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
-  user?: Prisma.usersOrderByWithRelationInput
   items?: Prisma.order_itemsOrderByRelationAggregateInput
+  user?: Prisma.usersOrderByWithRelationInput
   _relevance?: Prisma.ordersOrderByRelevanceInput
 }
 
@@ -404,8 +404,8 @@ export type ordersWhereUniqueInput = Prisma.AtLeast<{
   total_amount?: Prisma.DecimalFilter<"orders"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Prisma.DateTimeFilter<"orders"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"orders"> | Date | string
-  user?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
   items?: Prisma.Order_itemsListRelationFilter
+  user?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
 }, "id">
 
 export type ordersOrderByWithAggregationInput = {
@@ -478,8 +478,8 @@ export type ordersCreateInput = {
   total_amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Date | string
   updated_at?: Date | string
-  user: Prisma.usersCreateNestedOneWithoutOrdersInput
   items?: Prisma.order_itemsCreateNestedManyWithoutOrderInput
+  user: Prisma.usersCreateNestedOneWithoutOrdersInput
 }
 
 export type ordersUncheckedCreateInput = {
@@ -523,8 +523,8 @@ export type ordersUpdateInput = {
   total_amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.usersUpdateOneRequiredWithoutOrdersNestedInput
   items?: Prisma.order_itemsUpdateManyWithoutOrderNestedInput
+  user?: Prisma.usersUpdateOneRequiredWithoutOrdersNestedInput
 }
 
 export type ordersUncheckedUpdateInput = {
@@ -1121,8 +1121,8 @@ export type ordersSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   total_amount?: boolean
   created_at?: boolean
   updated_at?: boolean
-  user?: boolean | Prisma.usersDefaultArgs<ExtArgs>
   items?: boolean | Prisma.orders$itemsArgs<ExtArgs>
+  user?: boolean | Prisma.usersDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.OrdersCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["orders"]>
 
@@ -1152,16 +1152,16 @@ export type ordersSelectScalar = {
 
 export type ordersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "user_id" | "shipping_full_name" | "shipping_phone" | "shipping_street" | "shipping_city" | "shipping_state" | "shipping_country" | "shipping_postal_code" | "status" | "payment_status" | "payment_method" | "subtotal" | "discount" | "tax" | "shipping_fee" | "total_amount" | "created_at" | "updated_at", ExtArgs["result"]["orders"]>
 export type ordersInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.usersDefaultArgs<ExtArgs>
   items?: boolean | Prisma.orders$itemsArgs<ExtArgs>
+  user?: boolean | Prisma.usersDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.OrdersCountOutputTypeDefaultArgs<ExtArgs>
 }
 
 export type $ordersPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "orders"
   objects: {
-    user: Prisma.$usersPayload<ExtArgs>
     items: Prisma.$order_itemsPayload<ExtArgs>[]
+    user: Prisma.$usersPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1523,8 +1523,8 @@ readonly fields: ordersFieldRefs;
  */
 export interface Prisma__ordersClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  user<T extends Prisma.usersDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.usersDefaultArgs<ExtArgs>>): Prisma.Prisma__usersClient<runtime.Types.Result.GetResult<Prisma.$usersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   items<T extends Prisma.orders$itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.orders$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$order_itemsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  user<T extends Prisma.usersDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.usersDefaultArgs<ExtArgs>>): Prisma.Prisma__usersClient<runtime.Types.Result.GetResult<Prisma.$usersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
