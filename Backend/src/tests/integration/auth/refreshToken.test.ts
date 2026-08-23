@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi, } from "vitest";
 import { reshfreshTokenService } from "../../../modules/auth/auth.services.js";
 import { selectRefreshToken, getUserById, } from "../../../modules/auth/auth.repository.js";
-import { unlockUserAccount } from "../../../modules/auth/auth.repository.js";
 import { hashToken } from "../../../shared/utility/helper.js";
 import { getAccessAndRefreshToken } from "../../../shared/utility/helper.js";
 import { revokeTokenChain } from "../../../shared/utility/helper.js";
@@ -9,11 +8,12 @@ import { revokeTokenChain } from "../../../shared/utility/helper.js";
 vi.mock("../../../modules/auth/auth.repository.js", () => ({
     selectRefreshToken: vi.fn(),
     getUserById: vi.fn(),
-    revokeTokenChain: vi.fn(),
 }));
 
-vi.mock("../../../shared/auth/jwt.js", () => ({
+vi.mock("../../../shared/utility/helper.js", () => ({
     hashToken: vi.fn(),
+    getAccessAndRefreshToken:vi.fn(),
+    revokeTokenChain: vi.fn(),
 }));
 
 describe("refreshToken", () => {
@@ -27,8 +27,9 @@ describe("refreshToken", () => {
             statusCode: 400,
             message: "No refresh token found in cookies",
         });
+    });
 
-        it("should throw 500 when refresh token lookup fails", async () => {
+    it("should throw 500 when refresh token lookup fails", async () => {
             vi.mocked(hashToken).mockReturnValue("hashed-token");
 
             vi.mocked(selectRefreshToken).mockRejectedValue(
@@ -48,9 +49,9 @@ describe("refreshToken", () => {
                 statusCode: 500,
                 message: "Failed to refresh the token.",
             });
-        });
+    });
 
-        it("should reject an invalid refresh token", async () => {
+    it("should reject an invalid refresh token", async () => {
             vi.mocked(hashToken).mockReturnValue("hashed-token");
 
             vi.mocked(selectRefreshToken).mockResolvedValue([]);
@@ -74,11 +75,11 @@ describe("refreshToken", () => {
                 message: "Invalid refresh token",
             });
 
-            expect(clearCookie).toHaveBeenCalledWith("access_token");
-            expect(clearCookie).toHaveBeenCalledWith("refresh_token");
-        });
+            expect(clearCookie).toHaveBeenCalledWith("accessToken");
+            expect(clearCookie).toHaveBeenCalledWith("refreshToken");
+    });
 
-        it("should detect refresh token reuse", async () => {
+    it("should detect refresh token reuse", async () => {
             vi.mocked(hashToken).mockReturnValue("hashed-token");
 
             vi.mocked(selectRefreshToken).mockResolvedValue([
@@ -102,7 +103,7 @@ describe("refreshToken", () => {
 
             await expect(
                 reshfreshTokenService(
-                    "refresh-token",
+                    "refreshToken",
                     req,
                     res
                 )
@@ -113,11 +114,11 @@ describe("refreshToken", () => {
 
             expect(revokeTokenChain).toHaveBeenCalledWith(10);
 
-            expect(clearCookie).toHaveBeenCalledWith("access_token");
-            expect(clearCookie).toHaveBeenCalledWith("refresh_token");
-        });
+            expect(clearCookie).toHaveBeenCalledWith("accessToken");
+            expect(clearCookie).toHaveBeenCalledWith("refreshToken");
+    });
 
-        it("should reject an expired refresh token", async () => {
+    it("should reject an expired refresh token", async () => {
             vi.mocked(hashToken).mockReturnValue("hashed-token");
 
             vi.mocked(selectRefreshToken).mockResolvedValue([
@@ -148,11 +149,11 @@ describe("refreshToken", () => {
                 message: "Refresh token expired",
             });
 
-            expect(clearCookie).toHaveBeenCalledWith("access_token");
-            expect(clearCookie).toHaveBeenCalledWith("refresh_token");
-        });
+            expect(clearCookie).toHaveBeenCalledWith("accessToken");
+            expect(clearCookie).toHaveBeenCalledWith("refreshToken");
+    });
 
-        it("should reject when refresh token belongs to invalid user", async () => {
+    it("should reject when refresh token belongs to invalid user", async () => {
             vi.mocked(hashToken).mockReturnValue("hashed-token");
 
             vi.mocked(selectRefreshToken).mockResolvedValue([
@@ -171,7 +172,7 @@ describe("refreshToken", () => {
 
             await expect(
                 reshfreshTokenService(
-                    "refresh-token",
+                    "refreshToken",
                     req,
                     res
                 )
@@ -179,9 +180,9 @@ describe("refreshToken", () => {
                 statusCode: 401,
                 message: "Invalid user.",
             });
-        });
+    });
 
-        it("should reject refresh when account is locked", async () => {
+    it("should reject refresh when account is locked", async () => {
             vi.mocked(hashToken).mockReturnValue("hashed-token");
 
             vi.mocked(selectRefreshToken).mockResolvedValue([
@@ -207,16 +208,16 @@ describe("refreshToken", () => {
 
             await expect(
                 reshfreshTokenService(
-                    "refresh-token",
+                    "refreshToken",
                     req,
                     res
                 )
             ).rejects.toMatchObject({
                 statusCode: 429,
             });
-        });
+    });
 
-        it("should refresh tokens successfully", async () => {
+    it("should refresh tokens successfully", async () => {
             vi.mocked(hashToken).mockReturnValue("hashed-token");
 
             vi.mocked(selectRefreshToken).mockResolvedValue([
@@ -261,9 +262,8 @@ describe("refreshToken", () => {
                 sameSite: "strict",
                 maxAge: 7 * 24 * 60 * 60 * 1000,
             });
-        });
-
     });
+
 })
 
 
@@ -277,7 +277,7 @@ describe("POST /api/auth/refresh-token", () => {
             .post("/api/auth/refresh-token")
             .set(
                 "Cookie",
-                "refreshToken=valid-refresh-token"
+                "refreshToken=3e5dd317125586bd2413b36eedeb1b4a2a498bbe444f1d7dde88c029368c748b"
             );
 
         expect(response.status).toBe(200);

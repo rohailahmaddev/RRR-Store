@@ -6,10 +6,11 @@ import { prisma } from "../../../config/database.js";
 const REGISTER_URL = "/api/auth/register";
 
 describe("POST /auth/register", () => {
-
-  beforeEach(async () => {
-    await prisma.users.deleteMany();
-  });
+ 
+  //uncommit it when test it delete all previous register user.
+  // beforeEach(async () => {
+  //   await prisma.users.deleteMany();
+  // });
 
   it("should register a new user successfully", async () => {
     const user = {

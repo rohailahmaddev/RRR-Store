@@ -2,13 +2,15 @@ import type { Request, Response } from "express"
 import { sendFogotPasswordEmail, sendVerificationEmail } from "../../infrastructure/email/email.services.js"
 import { getTemporaryToken } from "../../shared/auth/jwt.js"
 import { ApiError } from "../../shared/utility/ApiError.js"
-import { createUser, getUserByEmailRepo, getUserById, getUserByResetPasswordToken, lockedUserAccount, logoutUser, revokeRefreshToken, selectRefreshToken, unlockUserAccount, updateFailedAttempts, updateForgotPasswordToken, updateUserPasswordById, updateVerificationEmailTokenRepo, verifyEmailRepo } from "./auth.repository.js"
+import { activateUser, createUser, deactivateUser, getUserByEmailRepo, getUserById, getUserByResetPasswordToken, lockedUserAccount, logoutUser, revokeAllActiveRefreshTokensById, revokeRefreshToken, selectRefreshToken, unlockUserAccount, updateFailedAttempts, updateForgotPasswordToken, updateUserPasswordById, updateVerificationEmailTokenRepo, verifyEmailRepo } from "./auth.repository.js"
 import { User } from "../../shared/types/index.types.js"
 import { loginUser, registerUserInput } from "./auth.types.js"
 import { deleteFromCloudinary, uploadOnCloudinary } from "../../infrastructure/storage/cloudinary.storage.js"
 import { getErrorMessage } from "../../shared/utility/tryCatchError.js"
 import { UploadApiResponse } from "cloudinary";
 import { comparePassword, getAccessAndRefreshToken, hashPassword, hashToken, revokeTokenChain } from "../../shared/utility/helper.js"
+import { prisma } from "../../config/database.js"
+import { auditLogs } from "../logs/logs.services.js"
 
 const sendEmailService = async (user: User, req: Request) => {
     const { unHashedToken, hashedToken, tokenExpiry } = getTemporaryToken()
@@ -93,7 +95,7 @@ export const verifyEmailService = async (unhashedToken: string) => {
     }
 
     const hashedToken = hashToken(unhashedToken)
-    console.log(hashedToken)
+
     let result;
     try {
         result = await verifyEmailRepo(hashedToken)
@@ -241,16 +243,15 @@ export const logoutUserService = async (accessToken: string, refreshToken: strin
 
 }
 
-export const reshfreshTokenService = async (refreshToken: string,req:Request, res: Response) => {
+export const reshfreshTokenService = async (refreshToken: string, req: Request, res: Response) => {
     if (!refreshToken || refreshToken.trim() === '') {
         throw new ApiError(400, "No refresh token found in cookies")
     }
 
-    const hashedRefreshToken = hashToken(refreshToken);
-
+    console.log(refreshToken)
     let result;
     try {
-        result = await selectRefreshToken(hashedRefreshToken)
+        result = await selectRefreshToken(refreshToken)
     } catch (error) {
         throw new ApiError(500, "Failed to refresh the token.")
     }
@@ -261,24 +262,24 @@ export const reshfreshTokenService = async (refreshToken: string,req:Request, re
         throw new ApiError(401, "Invalid refresh token");
     }
 
-    if(result[0]?.is_revoked){
+    if (result[0]?.is_revoked) {
         await revokeTokenChain(result[0].id);
         res.clearCookie("accessToken");
         res.clearCookie("refreshToken");
         throw new ApiError(401, "Token reuse detected, session revoked");
     }
-    
-    if (result[0]?.expire_at && new Date(result[0].expire_at) < new Date()){
+
+    if (result[0]?.expire_at && new Date(result[0].expire_at) < new Date()) {
         res.clearCookie("accessToken");
         res.clearCookie("refreshToken");
         throw new ApiError(401, "Refresh token expired");
     }
 
-    
+
 
     let user;
     try {
-        if(result[0]?.user_id){
+        if (result[0]?.user_id) {
             user = await getUserById(result[0]?.user_id)
         }
 
@@ -286,7 +287,7 @@ export const reshfreshTokenService = async (refreshToken: string,req:Request, re
         throw new ApiError(500, "Failed the fetch the user.")
     }
 
-    if(!user){
+    if (!user) {
         throw new ApiError(401, "Invalid user.")
     }
 
@@ -298,13 +299,13 @@ export const reshfreshTokenService = async (refreshToken: string,req:Request, re
         } else {
             await unlockUserAccount(user.id)
         }
-    }  
+    }
 
     const userId = result[0]?.user_id;
     const oldTokenId = result[0]?.id;
     const userAgent = req.headers["user-agent"] ?? '';
     const ipAddress = req.ip ?? '';
-    const { accessToken, refreshToken:newRefreshToken } = await getAccessAndRefreshToken(userId as number, userAgent, ipAddress,oldTokenId);
+    const { accessToken, refreshToken: newRefreshToken } = await getAccessAndRefreshToken(userId as number, userAgent, ipAddress, oldTokenId);
 
     const cookieOptions = {
         httpOnly: true,
@@ -313,11 +314,11 @@ export const reshfreshTokenService = async (refreshToken: string,req:Request, re
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     };
 
-    return { accessToken, newRefreshToken , cookieOptions}
+    return { accessToken, newRefreshToken, cookieOptions }
 
 }
 
-export const forgotPasswordService = async (email:string, req:Request) => {
+export const forgotPasswordService = async (email: string, req: Request) => {
 
     let user;
     try {
@@ -326,7 +327,7 @@ export const forgotPasswordService = async (email:string, req:Request) => {
         throw new ApiError(500, "Failed to fetch user info try again.")
     }
 
-    if(!user){
+    if (!user) {
         throw new ApiError(401, "Invalid user.")
     }
 
@@ -337,13 +338,13 @@ export const forgotPasswordService = async (email:string, req:Request) => {
     } catch (error) {
         throw new ApiError(500, "Failed to generate the tokens try again")
     }
-     
-    await sendFogotPasswordEmail(user,req,unHashedToken);
+
+    await sendFogotPasswordEmail(user, req, unHashedToken);
 
     return null;
 }
 
-export const resetPasswordService = async(unhashedToken:string, newPassword:string) => {
+export const resetPasswordService = async (unhashedToken: string, newPassword: string) => {
     const hashedToken = hashToken(unhashedToken)
 
     let user;
@@ -353,19 +354,121 @@ export const resetPasswordService = async(unhashedToken:string, newPassword:stri
         throw new ApiError(500, "Failed to found the user try again.")
     }
 
-    if(user.length === 0) {
+    if (user.length === 0) {
         throw new ApiError(400, "Invalid user or reset time is over. Please request a new password reset link.")
     }
 
     const hashedPassword = await hashPassword(newPassword)
 
-    try {
-        if(user[0]?.id){
-            await updateUserPasswordById(user[0]?.id, hashedPassword)
-        }
+    if (!user[0]?.id) {
         throw new ApiError(400, "Invalid user or reset time is over. Please request a new password reset link.")
+    }
+
+    try {
+        await updateUserPasswordById(user[0]?.id, hashedPassword)
     } catch (error) {
         throw new ApiError(500, "Failed to update the password try again.")
     }
 
+    return;
+
+}
+
+export const deactivateUserService = async (userId: number, req: Request) => {
+
+    const adminId = req.user?.id;
+
+    if (adminId === undefined) {
+        throw new Error('Unauthorize admin');
+    }
+
+    let user;
+    try {
+        user = await getUserById(userId);
+    } catch (error) {
+        throw new ApiError(500, "Failed to fetch the user.")
+    }
+
+    if (!user) {
+        throw new ApiError(404, "User not found.")
+    }
+
+    if (user?.role === 'admin') {
+        throw new ApiError(403, "Admin accounts cannot be deactivated.")
+    }
+
+    if (!user?.is_active) {
+        throw new ApiError(400, "User account is already deactivated.")
+    }
+
+    try {
+        await prisma.$transaction(async (tx) => {
+            await deactivateUser(userId, tx);
+            await revokeAllActiveRefreshTokensById(userId, tx);
+        })
+    } catch (error) {
+        throw new ApiError(500, "Failed to deactivate the user account.")
+    }
+
+    //create audit logs
+    await auditLogs({
+        userId: adminId,
+        action: "DEACTIVATE_USER",
+        entityType: "users",
+        entityId: Number(userId),
+        details: { is_active: { from: user.is_active, to: false } },
+        ipAddress: req?.ip,
+    });
+
+
+    return;
+}
+
+export const activateUserAccountService = async (userId: number, req: Request) => {
+
+    const adminId = req.user?.id;
+
+    if (adminId === undefined) {
+        throw new Error('Unauthorize admin');
+    }
+
+    let user;
+    try {
+        user = await getUserById(userId);
+    } catch (error) {
+        throw new ApiError(500, "Failed to fetch the user.")
+    }
+
+    if (!user) {
+        throw new ApiError(404, "User not found.")
+    }
+
+    if (user?.role === 'admin') {
+        throw new ApiError(403, "Admin cannot activate another admin.")
+    }
+
+    if (user?.is_active) {
+        throw new ApiError(400, "User account is already activated.")
+    }
+
+    try {
+        await prisma.$transaction(async (tx) => {
+            await activateUser(userId, tx);
+        })
+    } catch (error) {
+        throw new ApiError(500, "Failed to activate the user account.")
+    }
+
+    //create audit logs
+    await auditLogs({
+        userId: adminId,
+        action: "ACTIVATE_USER",
+        entityType: "users",
+        entityId: Number(userId),
+        details: { is_active: { from: user.is_active, to: true } },
+        ipAddress: req?.ip,
+    });
+
+
+    return;
 }

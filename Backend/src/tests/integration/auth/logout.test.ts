@@ -8,7 +8,7 @@ vi.mock("../../../modules/auth/auth.repository.js", () => ({
   logoutUser: vi.fn(),
 }));
 
-vi.mock("../../../shared/auth/jwt.js", () => ({
+vi.mock("../../../shared/utility/helper.js", () => ({
   hashToken: vi.fn(),
 }));
 
@@ -125,9 +125,9 @@ describe("POST /api/auth/logout", () => {
     const response = await request(app)
       .post("/api/auth/logout");
 
-    expect(response.status).toBe(400);
-    expect(response.body.success).toBe(false);
-    expect(response.body.message).toBe(
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe(
       "No tokens found in cookies"
     );
   });

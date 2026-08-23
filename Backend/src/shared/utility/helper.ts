@@ -67,13 +67,11 @@ export const getAccessAndRefreshToken = async (userId:number, userAgent:string, 
     const refreshTokenExpiryMs = ms(env.REFRESH_TOKEN_EXPIRY as any);
     const refreshTokenExpiry = new Date(Date.now() + refreshTokenExpiryMs);
 
-    const hashedRefreshToken = hashToken(refreshToken);
-
     await prisma.$transaction( async (tx) => {
         const insertedRow = await tx.refresh_tokens.create({
             data:{
                 user_id:userId,
-                token_hash:hashedRefreshToken, 
+                token_hash:refreshToken, 
                 user_agent:userAgent, 
                 ip_address:userIp, 
                 expire_at:refreshTokenExpiry
