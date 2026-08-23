@@ -27,12 +27,11 @@ const sendEmailService = async (user: User, req: Request) => {
 const uploadAvatarImage = async (avatarLocalPath: string): Promise<UploadApiResponse> => {
 
     try {
-
         return await uploadOnCloudinary(avatarLocalPath)
-
     } catch (error) {
         throw new ApiError(502, `Failed to upload avatar image. ${getErrorMessage(error)}`)
     }
+    
 }
 
 export const userRegisterService = async ({

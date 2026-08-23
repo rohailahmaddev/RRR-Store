@@ -4,7 +4,7 @@ import { deleteFromCloudinary, uploadOnCloudinary } from "../../infrastructure/s
 import { getAccessToken, getRefreshToken } from "../auth/jwt.js";
 import crypto from "crypto"
 import { prisma } from "../../config/database.js";
-import { cartItemList, userSelect } from "../types/index.types.js";
+import { cartItemList, productVariantsList, uploadImagesList, userSelect } from "../types/index.types.js";
 import { env } from "../../config/env.js";
 import { Decimal, TransactionClient } from "../../generated/prisma/internal/prismaNamespace.js";
 import bcrypt from "bcrypt";
@@ -98,20 +98,16 @@ export const getAccessAndRefreshToken = async (userId:number, userAgent:string, 
   }
 }
 
-export const uploadImagesOnCloudinary = async (filesLocalPath: string[] = []):Promise<object[]> => {
+export const uploadImagesOnCloudinary = async (filesLocalPath: string[] = []):Promise<uploadImagesList> => {
 
   if(filesLocalPath.length === 0) return []
 
-  console.log(filesLocalPath)
   
   let uploadResult = await Promise.allSettled(
     filesLocalPath.map((filePath) => uploadOnCloudinary(filePath))
   )
 
-  let upload:Array<{
-    url:string,
-    public_id:string
-  }> = [];
+  let upload:uploadImagesList = [];
 
   let failed:string[] = [] ;
 
@@ -128,10 +124,10 @@ export const uploadImagesOnCloudinary = async (filesLocalPath: string[] = []):Pr
 
   if(failed.length>0){
     await Promise.all(
-    upload.map((img) => deleteFromCloudinary(img.public_id))
-  )
+      upload.map((img) => deleteFromCloudinary(img.public_id))
+    )
 
-    throw new ApiError(500,`Failed to upload ${failed.length} image(s)`);
+    throw new ApiError(500,`Failed to upload ${failed.length} image(s).`);
   }
 
   return upload
@@ -170,15 +166,12 @@ export const calculateQuantity = (result:cartItemList) => {
   return totalItems;
 }
 
-export const validateVariantsArray = (product_variants:{stock?:number, size_name:string, color:string}[])=> {
+export const validateVariantsArray = (product_variants:productVariantsList)=> {
     const productVariants = product_variants.length > 0 ? 
-        product_variants.map((variant, index) => {
-            if (variant.stock === undefined) {
-                 throw new ApiError(400, `Variant at index ${index} has an invalid or missing stock value`);
-            }
+        product_variants.map((variant) => {
             return {
-            size_name: variant.size_name.trim()?variant.size_name:"Standard",
-            color: variant.color.trim()?variant.color:"Default",
+            size_name: variant.size_name,
+            color: variant.color,
             stock: variant.stock,
             };
         }): [{ size_name: "Standard", color: "Default", stock: 0 }];

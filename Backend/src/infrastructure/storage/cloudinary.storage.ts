@@ -22,7 +22,6 @@ const uploadOnCloudinary = async (localFilePath:string) : Promise<UploadApiRespo
             }
         )
 
-        console.log("File is uploaded on cloudinary. File src: " + response.url)
          
         // delete file from server
         deleteLocalFile(localFilePath)

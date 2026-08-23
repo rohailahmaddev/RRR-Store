@@ -55,4 +55,19 @@ export interface cartItem {
 
 export type cartItemList = cartItem[]
 
+export interface uploadedImages{
+    url:string;
+    public_id:string;
+};
+
+export type uploadImagesList = uploadedImages[];
+
+export interface productVariants{
+  stock:number;
+  size_name:string;
+  color:string;
+}
+
+export type productVariantsList = productVariants[];
+
 export {};

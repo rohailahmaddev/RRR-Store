@@ -43,13 +43,7 @@ export const productVariantsSchema =
 });
 
 export const createProductSchema = z.object({
-  sku: z
-    .string()
-    .trim()
-    .min(1)
-    .max(50),
-
-  name: z
+  productName: z
     .string()
     .trim()
     .min(2)
@@ -62,14 +56,23 @@ export const createProductSchema = z.object({
     .optional(),
 
   price: z
-    .number()
+    .coerce.number()
     .finite()
-    .nonnegative(),
+    .multipleOf(0.01),
+  
+  sku: z
+    .string()
+    .trim()
+    .min(1)
+    .max(50),
 
-  category_id: z
-    .number()
-    .int()
-    .positive(),
 
-  variants: productVariantsSchema.optional(),
+  categoryName: z
+    .string()
+    .trim()
+    .min(2)
+    .max(100),
+
+
+  productVariants: productVariantsSchema.optional(),
 });
