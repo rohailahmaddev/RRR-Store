@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../shared/utility/asyncHandler.js";
-import { addProductService } from "./product.services.js";
+import { addProductService, updateProductServices } from "./product.services.js";
 import { parseJson } from "../../shared/utility/helper.js";
 import { ApiResponse } from "../../shared/utility/ApiResponse.js";
 
@@ -14,4 +14,10 @@ export const addProductController = asyncHandler(async(req:Request, res:Response
     return res
     .status(201)
     .json(new ApiResponse(201, "Product created successfully", { product_id:productId }))
+})
+
+export const updateProductController = asyncHandler(async(req:Request,res:Response) => {
+    const {id: productId} = req.params;
+
+    await updateProductServices(req,productId);
 })

@@ -75,3 +75,7 @@ export const addProductService = async({ productName, description, price, catego
     return productId;  
 
 }
+
+export const updateProductServices = async(req:Request,productId:number)  => {
+    
+}
