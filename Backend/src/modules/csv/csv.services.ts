@@ -106,10 +106,10 @@ export const importCSVServices = async(req:Request, filePath:string | undefined)
         if(!row.productName || !row.sku || !row.price || !row.categoryName) {
             errors.push(`Row ${index + 1} missing fields required e.i (product_name, sku, product_price, product_category).`);
         }
-        if(row.price) {
+        if(row.price && isNaN(Number(row.price))){
             errors.push(`Row ${index + 1} has an invalid product price.`);
         }
-        if(row.stock){
+        if(row.stock && isNaN(Number(row.stock))){
             errors.push(`Row ${index + 1} has an invalid product stock.`);
         }
     })
@@ -127,19 +127,18 @@ export const importCSVServices = async(req:Request, filePath:string | undefined)
             productMap.set(row.sku, {
                 productName: row.productName,
                 sku: row.sku,
-                price: row.price,
+                price:Number( row.price),
                 description: row.description || null,
                 categoryName: row.categoryName || null,
                 variants: []
             })
 
         }
-
         if(row.stock !== undefined) {
             productMap.get(row.sku).variants.push({
                 size_name: row.size_name || "Standard",
                 color: row.color || "Default",
-                stock: row.stock || 0
+                stock: Number(row.stock) || 0
             })
         }
     }
@@ -149,11 +148,11 @@ export const importCSVServices = async(req:Request, filePath:string | undefined)
         for (const product of productMap.values()) {
             const categoryId = await insertCategoriesService(product.categoryName, tx);
             const existingProduct = await getExistingProductBySku(product.sku, tx);
-
             let productId
             if(existingProduct?.id){
                 productId = existingProduct.id
                 await updateExistingProduct(productId,product,categoryId,tx);
+
             } else {
                 const createdProduct = await createProductByCSV(product,categoryId,tx);
                 productId = createdProduct.id;
@@ -161,21 +160,23 @@ export const importCSVServices = async(req:Request, filePath:string | undefined)
                 for(const variant of productVariants) {
                     await createProductVariantsByCSV(variant,productId,tx)
                 }
-
             }
         }
         })
     } catch (error) {
-        throw new ApiError(500, 'Failed to import the product CSV.')
+        throw new ApiError(500, `Failed to import the product CSV.${getErrorMessage(error)}`)
     }
 
-    await auditLogs({
-        userId: req?.user?.id??0,
-        action: "IMPORT_PRODUCT_CSV",
-        entityType: "CSV",
-        entityId: null,
-        details: { export_csv: "Import products csv" },
-        ipAddress: req.ip,
+    await auditLogs({ 
+        userId: req?.user?.id ?? 0, 
+        action: "IMPORT_PRODUCT_CSV", 
+        entityType: "CSV", 
+        entityId: null, 
+        details: { 
+            import_csv: "Products imported from CSV file", 
+            products_imported: productMap.size, 
+        }, 
+        ipAddress: req.ip, 
     });
 
     return;

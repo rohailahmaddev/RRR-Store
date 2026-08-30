@@ -3,6 +3,7 @@ import { verifyJWT } from "../../middlewares/auth.middleware.js";
 import { isAdmin } from "../../middlewares/isAdmin.middleware.js";
 import { RequestId } from "../../middlewares/requestId.middleware.js";
 import { exportCSVController, exportProductVariantCSVController, importProductVariantCSVController } from "./csv.controllers.js";
+import upload from "../../middlewares/multer.middleware.js";
 
 const router = Router();
 
@@ -24,6 +25,7 @@ router.route("/import-csv").post(
     RequestId,
     verifyJWT,
     isAdmin,
+    upload.single("file"),
     importProductVariantCSVController
 )
 

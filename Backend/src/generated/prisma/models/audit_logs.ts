@@ -210,7 +210,7 @@ export type Audit_logsGroupByOutputType = {
   user_id: number | null
   action: string
   entity_type: string
-  entity_id: number
+  entity_id: number | null
   details: string | null
   ip_address: string | null
   created_at: Date
@@ -244,7 +244,7 @@ export type audit_logsWhereInput = {
   user_id?: Prisma.IntNullableFilter<"audit_logs"> | number | null
   action?: Prisma.StringFilter<"audit_logs"> | string
   entity_type?: Prisma.StringFilter<"audit_logs"> | string
-  entity_id?: Prisma.IntFilter<"audit_logs"> | number
+  entity_id?: Prisma.IntNullableFilter<"audit_logs"> | number | null
   details?: Prisma.StringNullableFilter<"audit_logs"> | string | null
   ip_address?: Prisma.StringNullableFilter<"audit_logs"> | string | null
   created_at?: Prisma.DateTimeFilter<"audit_logs"> | Date | string
@@ -256,7 +256,7 @@ export type audit_logsOrderByWithRelationInput = {
   user_id?: Prisma.SortOrderInput | Prisma.SortOrder
   action?: Prisma.SortOrder
   entity_type?: Prisma.SortOrder
-  entity_id?: Prisma.SortOrder
+  entity_id?: Prisma.SortOrderInput | Prisma.SortOrder
   details?: Prisma.SortOrderInput | Prisma.SortOrder
   ip_address?: Prisma.SortOrderInput | Prisma.SortOrder
   created_at?: Prisma.SortOrder
@@ -272,7 +272,7 @@ export type audit_logsWhereUniqueInput = Prisma.AtLeast<{
   user_id?: Prisma.IntNullableFilter<"audit_logs"> | number | null
   action?: Prisma.StringFilter<"audit_logs"> | string
   entity_type?: Prisma.StringFilter<"audit_logs"> | string
-  entity_id?: Prisma.IntFilter<"audit_logs"> | number
+  entity_id?: Prisma.IntNullableFilter<"audit_logs"> | number | null
   details?: Prisma.StringNullableFilter<"audit_logs"> | string | null
   ip_address?: Prisma.StringNullableFilter<"audit_logs"> | string | null
   created_at?: Prisma.DateTimeFilter<"audit_logs"> | Date | string
@@ -284,7 +284,7 @@ export type audit_logsOrderByWithAggregationInput = {
   user_id?: Prisma.SortOrderInput | Prisma.SortOrder
   action?: Prisma.SortOrder
   entity_type?: Prisma.SortOrder
-  entity_id?: Prisma.SortOrder
+  entity_id?: Prisma.SortOrderInput | Prisma.SortOrder
   details?: Prisma.SortOrderInput | Prisma.SortOrder
   ip_address?: Prisma.SortOrderInput | Prisma.SortOrder
   created_at?: Prisma.SortOrder
@@ -303,7 +303,7 @@ export type audit_logsScalarWhereWithAggregatesInput = {
   user_id?: Prisma.IntNullableWithAggregatesFilter<"audit_logs"> | number | null
   action?: Prisma.StringWithAggregatesFilter<"audit_logs"> | string
   entity_type?: Prisma.StringWithAggregatesFilter<"audit_logs"> | string
-  entity_id?: Prisma.IntWithAggregatesFilter<"audit_logs"> | number
+  entity_id?: Prisma.IntNullableWithAggregatesFilter<"audit_logs"> | number | null
   details?: Prisma.StringNullableWithAggregatesFilter<"audit_logs"> | string | null
   ip_address?: Prisma.StringNullableWithAggregatesFilter<"audit_logs"> | string | null
   created_at?: Prisma.DateTimeWithAggregatesFilter<"audit_logs"> | Date | string
@@ -312,7 +312,7 @@ export type audit_logsScalarWhereWithAggregatesInput = {
 export type audit_logsCreateInput = {
   action: string
   entity_type: string
-  entity_id: number
+  entity_id?: number | null
   details?: string | null
   ip_address?: string | null
   created_at?: Date | string
@@ -324,7 +324,7 @@ export type audit_logsUncheckedCreateInput = {
   user_id?: number | null
   action: string
   entity_type: string
-  entity_id: number
+  entity_id?: number | null
   details?: string | null
   ip_address?: string | null
   created_at?: Date | string
@@ -333,7 +333,7 @@ export type audit_logsUncheckedCreateInput = {
 export type audit_logsUpdateInput = {
   action?: Prisma.StringFieldUpdateOperationsInput | string
   entity_type?: Prisma.StringFieldUpdateOperationsInput | string
-  entity_id?: Prisma.IntFieldUpdateOperationsInput | number
+  entity_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -345,7 +345,7 @@ export type audit_logsUncheckedUpdateInput = {
   user_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   action?: Prisma.StringFieldUpdateOperationsInput | string
   entity_type?: Prisma.StringFieldUpdateOperationsInput | string
-  entity_id?: Prisma.IntFieldUpdateOperationsInput | number
+  entity_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -356,7 +356,7 @@ export type audit_logsCreateManyInput = {
   user_id?: number | null
   action: string
   entity_type: string
-  entity_id: number
+  entity_id?: number | null
   details?: string | null
   ip_address?: string | null
   created_at?: Date | string
@@ -365,7 +365,7 @@ export type audit_logsCreateManyInput = {
 export type audit_logsUpdateManyMutationInput = {
   action?: Prisma.StringFieldUpdateOperationsInput | string
   entity_type?: Prisma.StringFieldUpdateOperationsInput | string
-  entity_id?: Prisma.IntFieldUpdateOperationsInput | number
+  entity_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -376,7 +376,7 @@ export type audit_logsUncheckedUpdateManyInput = {
   user_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   action?: Prisma.StringFieldUpdateOperationsInput | string
   entity_type?: Prisma.StringFieldUpdateOperationsInput | string
-  entity_id?: Prisma.IntFieldUpdateOperationsInput | number
+  entity_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -488,7 +488,7 @@ export type audit_logsUncheckedUpdateManyWithoutUserNestedInput = {
 export type audit_logsCreateWithoutUserInput = {
   action: string
   entity_type: string
-  entity_id: number
+  entity_id?: number | null
   details?: string | null
   ip_address?: string | null
   created_at?: Date | string
@@ -498,7 +498,7 @@ export type audit_logsUncheckedCreateWithoutUserInput = {
   id?: number
   action: string
   entity_type: string
-  entity_id: number
+  entity_id?: number | null
   details?: string | null
   ip_address?: string | null
   created_at?: Date | string
@@ -538,7 +538,7 @@ export type audit_logsScalarWhereInput = {
   user_id?: Prisma.IntNullableFilter<"audit_logs"> | number | null
   action?: Prisma.StringFilter<"audit_logs"> | string
   entity_type?: Prisma.StringFilter<"audit_logs"> | string
-  entity_id?: Prisma.IntFilter<"audit_logs"> | number
+  entity_id?: Prisma.IntNullableFilter<"audit_logs"> | number | null
   details?: Prisma.StringNullableFilter<"audit_logs"> | string | null
   ip_address?: Prisma.StringNullableFilter<"audit_logs"> | string | null
   created_at?: Prisma.DateTimeFilter<"audit_logs"> | Date | string
@@ -548,7 +548,7 @@ export type audit_logsCreateManyUserInput = {
   id?: number
   action: string
   entity_type: string
-  entity_id: number
+  entity_id?: number | null
   details?: string | null
   ip_address?: string | null
   created_at?: Date | string
@@ -557,7 +557,7 @@ export type audit_logsCreateManyUserInput = {
 export type audit_logsUpdateWithoutUserInput = {
   action?: Prisma.StringFieldUpdateOperationsInput | string
   entity_type?: Prisma.StringFieldUpdateOperationsInput | string
-  entity_id?: Prisma.IntFieldUpdateOperationsInput | number
+  entity_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -567,7 +567,7 @@ export type audit_logsUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   action?: Prisma.StringFieldUpdateOperationsInput | string
   entity_type?: Prisma.StringFieldUpdateOperationsInput | string
-  entity_id?: Prisma.IntFieldUpdateOperationsInput | number
+  entity_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -577,7 +577,7 @@ export type audit_logsUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   action?: Prisma.StringFieldUpdateOperationsInput | string
   entity_type?: Prisma.StringFieldUpdateOperationsInput | string
-  entity_id?: Prisma.IntFieldUpdateOperationsInput | number
+  entity_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ip_address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -625,7 +625,7 @@ export type $audit_logsPayload<ExtArgs extends runtime.Types.Extensions.Internal
     user_id: number | null
     action: string
     entity_type: string
-    entity_id: number
+    entity_id: number | null
     details: string | null
     ip_address: string | null
     created_at: Date

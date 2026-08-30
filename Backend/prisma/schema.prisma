@@ -228,7 +228,7 @@ model audit_logs {
   user_id     Int?
   action      String   @db.VarChar(100)
   entity_type String   @db.VarChar(50)
-  entity_id   Int
+  entity_id   Int?
   details     String?  @db.LongText
   ip_address  String?  @db.VarChar(45)
   created_at  DateTime @default(now())
