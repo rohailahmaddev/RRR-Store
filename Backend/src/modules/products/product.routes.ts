@@ -5,7 +5,7 @@ import { isAdmin } from "../../middlewares/isAdmin.middleware.js";
 import { validate } from "../../middlewares/validate.middleware.js";
 import { createProductSchema } from "../../validations/product.validation.js";
 import upload from "../../middlewares/multer.middleware.js";
-import { addProductController, updateProductListingController } from "./product.controllers.js";
+import { addProductController, getProductsController, updateProductListingController } from "./product.controllers.js";
 import { validateImages } from "../../middlewares/image.middleware.js";
 import { parseJsonFields } from "../../middlewares/parseJsonFields.middleware.js";
 
@@ -38,4 +38,8 @@ router.route("/update-product/:id").put(
     updateProductListingController
 )
 
+router.route("/get-products").get(
+    RequestId,
+    getProductsController
+)
 export default router;

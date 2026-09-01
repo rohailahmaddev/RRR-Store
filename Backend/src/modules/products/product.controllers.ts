@@ -36,7 +36,7 @@ export const updateProductListingController = asyncHandler(
   }
 );
 
-export const getProducts = asyncHandler(async (req: Request, res: Response) => {
+export const getProductsController = asyncHandler(async (req: Request, res: Response) => {
 
 
   const { products, totalProducts, page, limit } = await getProductsService(req.query);
