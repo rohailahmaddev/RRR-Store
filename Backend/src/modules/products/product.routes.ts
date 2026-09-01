@@ -5,7 +5,14 @@ import { isAdmin } from "../../middlewares/isAdmin.middleware.js";
 import { validate } from "../../middlewares/validate.middleware.js";
 import { createProductSchema } from "../../validations/product.validation.js";
 import upload from "../../middlewares/multer.middleware.js";
-import { addProductController, getProductsController, updateProductListingController } from "./product.controllers.js";
+import { 
+    activateProductListingController,
+    addProductController, 
+    deactivateProductListingController, 
+    getProductsController, 
+    getSingleProductController, 
+    updateProductListingController 
+} from "./product.controllers.js";
 import { validateImages } from "../../middlewares/image.middleware.js";
 import { parseJsonFields } from "../../middlewares/parseJsonFields.middleware.js";
 
@@ -42,4 +49,23 @@ router.route("/get-products").get(
     RequestId,
     getProductsController
 )
+
+router.route("/get-product/:id").get(
+    RequestId,
+    getSingleProductController
+)
+
+router.route("/deactivate-product/:id").put(
+    RequestId,
+    verifyJWT,
+    isAdmin,
+    deactivateProductListingController
+)
+router.route("/activate-product/:id").put(
+    RequestId,
+    verifyJWT,
+    isAdmin,
+    activateProductListingController
+)
+
 export default router;

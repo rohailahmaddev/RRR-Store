@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../shared/utility/asyncHandler.js";
-import { addProductService, getProductsService, updateProductService } from "./product.services.js";
+import { activateProductListingService, addProductService, deactivateProductListingService, getProductsService, getSingleProductService, updateProductService } from "./product.services.js";
 import { ApiResponse } from "../../shared/utility/ApiResponse.js";
 
 export const addProductController = asyncHandler(async (req: Request, res: Response) => {
@@ -52,4 +52,32 @@ export const getProductsController = asyncHandler(async (req: Request, res: Resp
         limit: Number(limit),
       },
     }))
+})
+
+export const getSingleProductController = asyncHandler(async (req: Request, res: Response) => {
+  const product = await getSingleProductService(req);
+
+  return res
+  .status(200)
+  .json(new ApiResponse(200, "Product fetched successfully", product))
+})
+
+export const deactivateProductListingController = asyncHandler(async (req: Request, res: Response) => {
+
+  await deactivateProductListingService(req);
+
+  return res
+  .status(200)
+  .json(new ApiResponse(200, "Product listing is deactivated successfully"));
+
+})
+
+export const activateProductListingController = asyncHandler(async (req: Request, res: Response) => {
+
+  await activateProductListingService(req);
+
+  return res
+  .status(200)
+  .json(new ApiResponse(200, "Product listing is activated successfully"));
+
 })

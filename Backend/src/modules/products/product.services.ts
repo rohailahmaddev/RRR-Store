@@ -3,11 +3,11 @@ import { deleteFromCloudinary, uploadImagesOnCloudinaryService } from "../../inf
 import { ApiError } from "../../shared/utility/ApiError.js";
 import { validateVariantsArray } from "../../shared/utility/helper.js";
 import { getErrorMessage } from "../../shared/utility/tryCatchError.js";
-import { createProduct, createProductImages, createProductVariants, deleteProductImages, getProductById, getProductByQuery, getProductCount, getProductImagePublicIds, insertProductImages, updateProduct, updateProductVariants } from "./product.repository.js";
+import { createProduct, createProductImages, createProductVariants, deleteProductImages, getProductById, getProductByQuery, getProductCount, getProductImagePublicIds, getSingleProduct, insertProductImages, updateProduct, updateProductVariants } from "./product.repository.js";
 import { addProduct, getProductInput } from "./product.types.js";
 import { UpdateProductInput } from "./product.types.js"
 import { insertCategoriesService } from "../categories/categories.services.js";
-import { AnyAaaaRecord } from "node:dns";
+import { auditLogs } from "../logs/logs.services.js";
 
 export const addProductService = async ({ productName, description, price, categoryName, sku, productVariants, imageLocalPaths }: addProduct) => {
 
@@ -51,17 +51,17 @@ export const updateProductService = async ({ productId, body, files }: UpdatePro
     throw new ApiError(400, "Price must be a valid number");
   }
 
-  const hasProductVariants = body?.productVariants !== undefined;
-  let productVariants: any[];
-  if (hasProductVariants) {
-    productVariants = body?.productVariants;
-    if (!Array.isArray(productVariants)) {
-      throw new ApiError(
-        400,
-        "productVariants must be an array"
-      );
-    }
-  }
+  // const hasProductVariants = body?.productVariants !== undefined;
+  // let productVariants: any[];
+  // if (hasProductVariants) {
+  //   productVariants = body?.productVariants;
+  //   if (!Array.isArray(productVariants)) {
+  //     throw new ApiError(
+  //       400,
+  //       "productVariants must be an array"
+  //     );
+  //   }
+  // }
 
   const hasDeletedImagesIds = body?.deletedImageIds !== undefined
   let deletedImageIds: any[] = [];
@@ -132,10 +132,10 @@ export const updateProductService = async ({ productId, body, files }: UpdatePro
       }
 
       // Variants
-      if (hasProductVariants) {
-        const validatedVariants = validateVariantsArray(productVariants);
-        await updateProductVariants(productId, validatedVariants, tx);
-      }
+      // if (hasProductVariants) {
+      //   const validatedVariants = validateVariantsArray(productVariants);
+      //   await updateProductVariants(productId, validatedVariants, tx);
+      // }
     });
   } catch (error: any) {
     // DB failed → remove newly uploaded Cloudinary files
@@ -247,7 +247,7 @@ export const getProductsService = async (RequestQuery: any) => {
     rating: "products.rating DESC",
   };
 
-  query += ` ORDER BY ${sortMap[sort_by] || "products.created_at ASC"}`
+  query += ` ORDER BY ${sortMap[sort_by] || "products.created_at DESC"}`
   const offset = (Number(page) - 1) * Number(limit)
 
   query += ` LIMIT ? OFFSET ? `
@@ -264,3 +264,117 @@ export const getProductsService = async (RequestQuery: any) => {
   }
 
 }
+
+export const getSingleProductService = async(req:any) => {
+  const {id} = req.params;
+
+  if(!Number.isInteger(Number(id)) || Number(id) <= 0){
+    throw new ApiError(400, "Invalid product ID");
+  }
+
+  try {
+    const productId = Number(id)
+    const product = await getSingleProduct(productId)
+
+    if (!product || (Array.isArray(product) && product.length === 0)) {
+      throw new ApiError(404, "Product not found");
+    }
+
+    return  Array.isArray(product) ? product[0] : product;;
+
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(500, `Failed to fetch product. ${getErrorMessage(error)}`);
+  }
+}
+
+export const deactivateProductListingService = async (req:any) => {
+  const { id } = req.params;
+
+  if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
+    throw new ApiError(400, "Invalid product ID");
+  }
+
+  const productId = Number(id);
+
+  try {
+    const product = await getProductById(productId);
+
+    if (!product) {
+      throw new ApiError(404, "Product not found");
+    }
+
+    if(!product.is_active){
+      throw new ApiError(400, "Product is already deactivated");
+    }
+
+    await updateProduct(productId, { is_active: false }, prisma);
+
+    await auditLogs({
+      userId: req.user.id,
+      action: "DEACTIVATE_PRODUCT_LISTING",
+      entityType: "product",
+      entityId: productId,
+      details: {
+        field: "is_active",
+        oldValue: product.is_active,
+        newValue: false,
+      },
+      ipAddress: req.ip,
+    });
+
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(500, `Failed to deactivate product. ${getErrorMessage(error)}`);
+  }
+
+}
+
+export const activateProductListingService = async (req:any) => {
+  const { id } = req.params;
+
+  if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
+    throw new ApiError(400, "Invalid product ID");
+  }
+
+  const productId = Number(id);
+
+  try {
+    const product = await getProductById(productId);
+
+    if (!product) {
+      throw new ApiError(404, "Product not found");
+    }
+
+    if(product.is_active){
+      throw new ApiError(400, "Product is already activated");
+    }
+
+    await updateProduct(productId, { is_active: true }, prisma);
+
+    await auditLogs({
+      userId: req.user.id,
+      action: "ACTIVATE_PRODUCT_LISTING",
+      entityType: "product",
+      entityId: productId,
+      details: {
+        field: "is_active",
+        oldValue: product.is_active,
+        newValue: true,
+      },
+      ipAddress: req.ip,
+    });
+
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(500, `Failed to activate product. ${getErrorMessage(error)}`);
+  }
+
+}
+

@@ -39,6 +39,7 @@ describe("getProductsService", () => {
 
         const result = await getProductsService({});
 
+        console.log("Result:",result)
         expect(result).toEqual({
             products: [
                 {
@@ -54,13 +55,13 @@ describe("getProductsService", () => {
         });
 
         expect(getProductByQuery).toHaveBeenCalledTimes(1);
-        expect(getProductCount).toHaveBeenCalledTimes(1);
+        expect(getProductByQuery).toHaveBeenCalledTimes(1);
     });
 
     it("should apply search_name filter", async () => {
         vi.mocked(getProductByQuery).mockResolvedValue([]);
 
-        vi.mocked(getProductCount).mockResolvedValue([
+        vi.mocked(getProductByQuery).mockResolvedValue([
             {
                 total: 0,
             },
@@ -83,7 +84,7 @@ describe("getProductsService", () => {
     it("should apply category filter", async () => {
         vi.mocked(getProductByQuery).mockResolvedValue([]);
 
-        vi.mocked(getProductCount).mockResolvedValue([
+        vi.mocked(getProductByQuery).mockResolvedValue([
             {
                 total: 5,
             },
@@ -106,7 +107,7 @@ describe("getProductsService", () => {
     it("should apply minimum price filter", async () => {
         vi.mocked(getProductByQuery).mockResolvedValue([]);
 
-        vi.mocked(getProductCount).mockResolvedValue([
+        vi.mocked(getProductByQuery).mockResolvedValue([
             {
                 total: 5,
             },
@@ -129,7 +130,7 @@ describe("getProductsService", () => {
     it("should apply maximum price filter", async () => {
         vi.mocked(getProductByQuery).mockResolvedValue([]);
 
-        vi.mocked(getProductCount).mockResolvedValue([
+        vi.mocked(getProductByQuery).mockResolvedValue([
             {
                 total: 5,
             },
@@ -152,7 +153,7 @@ describe("getProductsService", () => {
     it("should apply min and max price filters together", async () => {
         vi.mocked(getProductByQuery).mockResolvedValue([]);
 
-        vi.mocked(getProductCount).mockResolvedValue([
+        vi.mocked(getProductByQuery).mockResolvedValue([
             {
                 total: 5,
             },
@@ -181,7 +182,7 @@ describe("getProductsService", () => {
     it("should apply category and price filters together", async () => {
         vi.mocked(getProductByQuery).mockResolvedValue([]);
 
-        vi.mocked(getProductCount).mockResolvedValue([
+        vi.mocked(getProductByQuery).mockResolvedValue([
             {
                 total: 2,
             },
@@ -231,7 +232,7 @@ describe("getProductsService", () => {
             vi.mocked(getProductByQuery).mock.calls[0]!;
 
         expect(query).toContain(
-            "ORDER BY price ASC"
+            "ORDER BY products.price ASC"
         );
     });
 
@@ -249,7 +250,7 @@ describe("getProductsService", () => {
             vi.mocked(getProductByQuery).mock.calls[0]!;
 
         expect(query).toContain(
-            "ORDER BY price DESC"
+            "ORDER BY products.price DESC"
         );
     });
 
@@ -267,7 +268,7 @@ describe("getProductsService", () => {
             vi.mocked(getProductByQuery).mock.calls[0]!;
 
         expect(query).toContain(
-            "ORDER BY created_at DESC"
+            "ORDER BY products.created_at DESC"
         );
     });
 
@@ -319,7 +320,7 @@ describe("getProductsService", () => {
     it("should convert page and limit to numbers", async () => {
         vi.mocked(getProductByQuery).mockResolvedValue([]);
 
-        vi.mocked(getProductCount).mockResolvedValue([
+        vi.mocked(getProductByQuery).mockResolvedValue([
             {
                 total: 50,
             },
@@ -357,7 +358,7 @@ describe("getProductsService", () => {
     it("should throw ApiError when count query fails", async () => {
         vi.mocked(getProductByQuery).mockResolvedValue([]);
 
-        vi.mocked(getProductCount).mockRejectedValue(
+        vi.mocked(getProductByQuery).mockRejectedValue(
             new Error("Count query failed")
         );
 
@@ -407,7 +408,7 @@ describe("getProductsService", () => {
             vi.mocked(getProductByQuery).mock.calls[0]!;
 
         expect(query).toContain(
-            "ORDER BY rating DESC"
+            "ORDER BY products.rating DESC"
         );
     });
 

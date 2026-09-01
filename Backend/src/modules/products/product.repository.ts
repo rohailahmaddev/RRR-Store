@@ -122,3 +122,65 @@ export const getProductByQuery = async ( query: any, params: any[] ) => {
 export const getProductCount = async ( query: any, params: any[] ) => {
   return prisma.$queryRawUnsafe(query, ...params);
 }
+
+export const getSingleProduct = async( productId:number ) => {
+ const query = `
+        SELECT products.id, products.sku, products.name, products.description, products.price, products.rating, products.rating_count, 
+        c.name AS category_name, c.id AS category_id,
+
+        (SELECT CONCAT(
+            '[', 
+            GROUP_CONCAT(
+                JSON_OBJECT(
+                    'size_name', pv.size_name,'color', pv.color, 'stock', pv.stock)
+            ), 
+            ']'
+            )
+            FROM product_variants pv
+            WHERE pv.product_id = products.id
+        ) AS product_variants,
+
+        (SELECT CONCAT(
+            '[',
+            GROUP_CONCAT(
+                JSON_OBJECT(
+                    'image_url', pi.image_url,
+                    'is_primary', pi.is_primary
+                )
+            ),
+            ']'
+        ) 
+           FROM product_images pi
+           WHERE pi.product_id = products.id 
+        )AS images,
+
+        COALESCE(
+            (SELECT 
+                CONCAT(
+                    '[',
+                    GROUP_CONCAT(
+                        JSON_OBJECT(
+                            'username', u.full_name,
+                            'avatar',u.avatar_url,
+                            'rating', r.rating,
+                            'comment', r.comment
+                        )
+                    ),
+                    ']'
+                ) 
+               FROM reviews r
+               INNER JOIN users u
+               ON u.id = r.user_id
+               WHERE r.product_id = products.id 
+            ), 
+            '[]'
+        )AS comments
+
+        FROM products 
+        LEFT JOIN categories c
+        ON c.id = products.category_id
+        
+        WHERE products.id = ?  AND products.is_Active = true
+  `
+  return getProductByQuery(query,[productId])
+}
