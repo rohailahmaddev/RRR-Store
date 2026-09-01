@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { importCSVServices } from "../../../../modules/csv/csv.services.js";
 import { createProductByCSV, createProductVariantsByCSV, getExistingProductBySku, updateExistingProduct, } from "../../../../modules/csv/csv.repository.js";
 import { auditLogs } from "../../../../modules/logs/logs.services.js";
-import { insertCategoriesService } from "../../../../modules/products/product.services.js";
+import { insertCategoriesService } from "../../../../modules/categories/categories.services.js";
 import { prisma } from "../../../../config/database.js";
 import fs from "fs";
 import { ApiError } from "../../../../shared/utility/ApiError.js";

@@ -5,7 +5,7 @@ import { isAdmin } from "../../middlewares/isAdmin.middleware.js";
 import { validate } from "../../middlewares/validate.middleware.js";
 import { createProductSchema } from "../../validations/product.validation.js";
 import upload from "../../middlewares/multer.middleware.js";
-import { addProductController } from "./product.controllers.js";
+import { addProductController, updateProductListingController } from "./product.controllers.js";
 import { validateImages } from "../../middlewares/image.middleware.js";
 import { parseJsonFields } from "../../middlewares/parseJsonFields.middleware.js";
 
@@ -15,7 +15,7 @@ router.route("/add-product").post(
     RequestId,
     verifyJWT,
     isAdmin,
-    upload.array("images",5),
+    upload.fields([{ name: "images", maxCount: 4 }]),
     validateImages({
         min: 1,
         max: 5,
@@ -23,6 +23,19 @@ router.route("/add-product").post(
     parseJsonFields(["productVariants"]),
     validate(createProductSchema),
     addProductController
+)
+
+router.route("/update-product/:id").put(
+    RequestId,
+    verifyJWT,
+    isAdmin,
+    upload.fields([{ name: "images", maxCount: 4 }]),
+    validateImages({
+        min:0,
+        max:5,
+    }),
+    parseJsonFields(["productVariants","deletedImageIds"]),
+    updateProductListingController
 )
 
 export default router;

@@ -8,7 +8,7 @@ import { auditLogs } from "../logs/logs.services.js";
 import { Request } from "express";
 import { importCSVList } from "./csv.types.js";
 import { prisma } from "../../config/database.js";
-import { insertCategoriesService } from "../products/product.services.js";
+import { insertCategoriesService } from "../categories/categories.services.js";
 
 export const exportCSVServices = async(req:Request)=> {
 

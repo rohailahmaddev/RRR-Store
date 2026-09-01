@@ -1,7 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 
 export const validateImages = (
-  options: { min?: number; max?: number; maxSizeBytes?: number; allowedMimeTypes?: string[] } = {}
+  options: {
+    min?: number;
+    max?: number;
+    maxSizeBytes?: number;
+    allowedMimeTypes?: string[];
+  } = {}
 ) => {
   const {
     min = 1,
@@ -11,13 +16,20 @@ export const validateImages = (
   } = options;
 
   return (req: Request, res: Response, next: NextFunction) => {
-    const files = req.files as Express.Multer.File[] | undefined;
+    const files =
+      (req.files as { images?: Express.Multer.File[] } | undefined)?.images ?? [];
 
-    if (!files || files.length < min) {
-      return res.status(400).json({ success: false, message: `At least ${min} image(s) required` });
+    if (files.length < min) {
+      return res.status(400).json({
+        success: false,
+        message: `At least ${min} image(s) required`,
+      });
     }
     if (files.length > max) {
-      return res.status(400).json({ success: false, message: `Maximum ${max} images allowed` });
+      return res.status(400).json({
+        success: false,
+        message: `Maximum ${max} images allowed`,
+      });
     }
 
     for (const file of files) {

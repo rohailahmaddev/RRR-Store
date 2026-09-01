@@ -98,42 +98,6 @@ export const getAccessAndRefreshToken = async (userId:number, userAgent:string, 
   }
 }
 
-export const uploadImagesOnCloudinary = async (filesLocalPath: string[] = []):Promise<uploadImagesList> => {
-
-  if(filesLocalPath.length === 0) return []
-
-  
-  let uploadResult = await Promise.allSettled(
-    filesLocalPath.map((filePath) => uploadOnCloudinary(filePath))
-  )
-
-  let upload:uploadImagesList = [];
-
-  let failed:string[] = [] ;
-
-  uploadResult.forEach((result, index) => {
-
-    if(result.status === "fulfilled" && result.value){
-      upload.push(result.value)
-    } else {
-      const fp = filesLocalPath[index];
-      if (fp) failed.push(fp);
-    }
-  
-  });
-
-  if(failed.length>0){
-    await Promise.all(
-      upload.map((img) => deleteFromCloudinary(img.public_id))
-    )
-
-    throw new ApiError(500,`Failed to upload ${failed.length} image(s).`);
-  }
-
-  return upload
-
-}
-
 export const getCartSubtotal = async (tx:TransactionClient, cartId:number) => {
   //change prisma with tx when call it
   const result = await prisma.cart_items.findMany({

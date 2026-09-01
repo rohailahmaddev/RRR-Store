@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { insertCategoriesService, } from "../../../../modules/products/product.services.js";
-import { getCategoryByName, insertCategory, } from "../../../../modules/products/product.repository.js";
+import { insertCategoriesService, } from "../../../../../modules/categories/categories.services.js";
+import { getCategoryByName, insertCategory, } from "../../../../../modules/categories/categories.repository.js";
 
 
 //category service
-vi.mock("../../../../modules/products/product.repository.js", () => ({
+vi.mock("../../../../../modules/categories/categories.repository.js", () => ({
   getCategoryByName: vi.fn(),
   insertCategory: vi.fn(),
 }));
