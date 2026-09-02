@@ -10,6 +10,7 @@ import {
     addProductController, 
     deactivateProductListingController, 
     getProductsController, 
+    getRelatedProductsController, 
     getSingleProductController, 
     updateProductListingController 
 } from "./product.controllers.js";
@@ -45,7 +46,7 @@ router.route("/update-product/:id").put(
     updateProductListingController
 )
 
-router.route("/get-products").get(
+router.route("/products").get(
     RequestId,
     getProductsController
 )
@@ -66,6 +67,11 @@ router.route("/activate-product/:id").put(
     verifyJWT,
     isAdmin,
     activateProductListingController
+)
+
+router.route("/related-products/:id").get(
+    RequestId,
+    getRelatedProductsController
 )
 
 export default router;

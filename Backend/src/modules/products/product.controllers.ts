@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../shared/utility/asyncHandler.js";
-import { activateProductListingService, addProductService, deactivateProductListingService, getProductsService, getSingleProductService, updateProductService } from "./product.services.js";
+import { activateProductListingService, addProductService, deactivateProductListingService, getProductsService, getRelatedProductsService, getSingleProductService, updateProductService } from "./product.services.js";
 import { ApiResponse } from "../../shared/utility/ApiResponse.js";
 
 export const addProductController = asyncHandler(async (req: Request, res: Response) => {
@@ -80,4 +80,11 @@ export const activateProductListingController = asyncHandler(async (req: Request
   .status(200)
   .json(new ApiResponse(200, "Product listing is activated successfully"));
 
+})
+
+export const getRelatedProductsController = asyncHandler(async (req: Request, res: Response) => {
+  const relatedProducts = await getRelatedProductsService(req);
+  return res
+  .status(200)
+  .json(new ApiResponse(200, "Related products fetched successfully", relatedProducts));
 })
