@@ -19,8 +19,8 @@ export const productVariantSchema = z.object({
     .nonnegative(),
 });
 
-export const productVariantsSchema =
-  z
+export const productVariantsSchema = z.object({
+  productVariants: z
     .array(productVariantSchema)
     .superRefine((variants, ctx) => {
       const seen = new Set<string>();
@@ -33,13 +33,13 @@ export const productVariantsSchema =
           ctx.addIssue({
             code: "custom",
             path: [index],
-            message:
-              "Duplicate size and color combination",
+            message: "Duplicate size and color combination",
           });
         }
 
         seen.add(key);
       });
+    }),
 });
 
 export const createProductSchema = z.object({

@@ -3,7 +3,7 @@ import { deleteFromCloudinary, uploadImagesOnCloudinaryService } from "../../inf
 import { ApiError } from "../../shared/utility/ApiError.js";
 import { validateVariantsArray } from "../../shared/utility/helper.js";
 import { getErrorMessage } from "../../shared/utility/tryCatchError.js";
-import { createProduct, createProductImages,updateProduct, deleteProductImages, getProductById, getProductByQuery, getProductCount, getProductImagePublicIds, getSingleProduct, insertProductImages, getProductCategoryIdByProductId, getRelatedProducts } from "./product.repository.js";
+import { createProduct, createProductImages, updateProduct, deleteProductImages, getProductById, getProductByQuery, getProductCount, getProductImagePublicIds, getSingleProduct, insertProductImages, getProductCategoryIdByProductId, getRelatedProducts } from "./product.repository.js";
 import { addProduct, getProductInput } from "./product.types.js";
 import { UpdateProductInput } from "./product.types.js"
 import { insertCategoriesService } from "../categories/categories.services.js";
@@ -59,18 +59,6 @@ export const updateProductService = async ({ productId, body, files }: UpdatePro
   if (price !== undefined && isNaN(Number(price))) {
     throw new ApiError(400, "Price must be a valid number");
   }
-
-  // const hasProductVariants = body?.productVariants !== undefined;
-  // let productVariants: any[];
-  // if (hasProductVariants) {
-  //   productVariants = body?.productVariants;
-  //   if (!Array.isArray(productVariants)) {
-  //     throw new ApiError(
-  //       400,
-  //       "productVariants must be an array"
-  //     );
-  //   }
-  // }
 
   const hasDeletedImagesIds = body?.deletedImageIds !== undefined
   let deletedImageIds: any[] = [];
@@ -140,11 +128,6 @@ export const updateProductService = async ({ productId, body, files }: UpdatePro
         await insertProductImages(productId, uploadedImages, tx);
       }
 
-      // Variants
-      // if (hasProductVariants) {
-      //   const validatedVariants = validateVariantsArray(productVariants);
-      //   await updateProductVariants(productId, validatedVariants, tx);
-      // }
     });
   } catch (error: any) {
     // DB failed → remove newly uploaded Cloudinary files
@@ -164,7 +147,7 @@ export const updateProductService = async ({ productId, body, files }: UpdatePro
   }
 };
 
-export const getProductsCountService = async (RequestQuery:any) => {
+export const getProductsCountService = async (RequestQuery: any) => {
 
   const { search_name, categoryId, min_price, max_price }: getProductInput = RequestQuery;
 
@@ -200,7 +183,7 @@ export const getProductsCountService = async (RequestQuery:any) => {
   } catch (error) {
     throw new ApiError(500, `Failed to fetch products count. ${getErrorMessage(error)}`);
   }
-  
+
 }
 
 export const getProductsService = async (RequestQuery: any) => {
@@ -262,7 +245,7 @@ export const getProductsService = async (RequestQuery: any) => {
   query += ` LIMIT ? OFFSET ? `
   param.push(Number(limit), offset)
 
-  
+
   try {
     const products = await getProductByQuery(query, param)
     const totalProducts = await getProductsCountService(RequestQuery)
@@ -274,10 +257,10 @@ export const getProductsService = async (RequestQuery: any) => {
 
 }
 
-export const getSingleProductService = async(req:Request) => {
-  const {id} = req.params;
+export const getSingleProductService = async (req: Request) => {
+  const { id } = req.params;
 
-  if(!Number.isInteger(Number(id)) || Number(id) <= 0){
+  if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
     throw new ApiError(400, "Invalid product ID");
   }
 
@@ -289,7 +272,7 @@ export const getSingleProductService = async(req:Request) => {
       throw new ApiError(404, "Product not found");
     }
 
-    return  Array.isArray(product) ? product[0] : product;;
+    return Array.isArray(product) ? product[0] : product;;
 
   } catch (error) {
     if (error instanceof ApiError) {
@@ -299,7 +282,7 @@ export const getSingleProductService = async(req:Request) => {
   }
 }
 
-export const deactivateProductListingService = async (req:any) => {
+export const deactivateProductListingService = async (req: any) => {
   const { id } = req.params;
 
   if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
@@ -315,7 +298,7 @@ export const deactivateProductListingService = async (req:any) => {
       throw new ApiError(404, "Product not found");
     }
 
-    if(!product.is_active){
+    if (!product.is_active) {
       throw new ApiError(400, "Product is already deactivated");
     }
 
@@ -343,7 +326,7 @@ export const deactivateProductListingService = async (req:any) => {
 
 }
 
-export const activateProductListingService = async (req:any) => {
+export const activateProductListingService = async (req: any) => {
   const { id } = req.params;
 
   if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
@@ -359,7 +342,7 @@ export const activateProductListingService = async (req:any) => {
       throw new ApiError(404, "Product not found");
     }
 
-    if(product.is_active){
+    if (product.is_active) {
       throw new ApiError(400, "Product is already activated");
     }
 
@@ -387,7 +370,7 @@ export const activateProductListingService = async (req:any) => {
 
 }
 
-export const getRelatedProductsService = async (req:any) => {
+export const getRelatedProductsService = async (req: any) => {
   const { id } = req.params;
 
   if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
@@ -395,19 +378,19 @@ export const getRelatedProductsService = async (req:any) => {
   }
 
   const productId = Number(id);
-  
+
   try {
     const product = await getProductCategoryIdByProductId(productId);
-    if(!product){
+    if (!product) {
       throw new ApiError(404, "Product not found");
     }
 
-    const relatedProducts = await getRelatedProducts(product?.category_id,productId, product.name);
+    const relatedProducts = await getRelatedProducts(product?.category_id, productId, product.name);
     return relatedProducts;
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
     }
     throw new ApiError(500, `Failed to fetch related products. ${getErrorMessage(error)}`);
-  } 
+  }
 }

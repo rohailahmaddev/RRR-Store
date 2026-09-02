@@ -1,12 +1,13 @@
 import Router from "express";
-
 import { addProductVariants, getProductVariantsController, updateProductVariantsController } from "./productVariants.controllers.js";
 import { deleteProductVariantController } from "./productVariants.controllers.js";
 import { RequestId } from "../../middlewares/requestId.middleware.js";
 import { verifyJWT } from "../../middlewares/auth.middleware.js";
 import { isAdmin } from "../../middlewares/isAdmin.middleware.js";
 import { validate } from "../../middlewares/validate.middleware.js";
-import { productVariantSchema } from "../../validations/product.validation.js";
+import { productVariantsSchema } from "../../validations/product.validation.js";
+import { parseJson } from "../../shared/utility/helper.js";
+import { parseJsonFields } from "../../middlewares/parseJsonFields.middleware.js";
 
 const router = Router();
 
@@ -14,11 +15,12 @@ router.route("/:id/variants").post(
   RequestId,
   verifyJWT,
   isAdmin,
-  validate(productVariantSchema),
+  parseJsonFields(["productVariants"]),
+  validate(productVariantsSchema),
   addProductVariants
 );
 
-router.route("/:id/variants").put(
+router.route("/:id/variants").get(
   RequestId,
   getProductVariantsController,
 );
@@ -27,7 +29,8 @@ router.route("/:id/variants").put(
   RequestId,
   verifyJWT,
   isAdmin,
-  validate(productVariantSchema),
+  parseJsonFields(["productVariants"]),
+  validate(productVariantsSchema),
   updateProductVariantsController
 );
 

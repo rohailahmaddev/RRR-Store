@@ -37,10 +37,10 @@ export const updateProductVariants = async ( productId: number, variants: any[],
 };
 
 export const deleteProductVariant = async ( productId: number, variantId: number, tx: TransactionClient = prisma ) => {
-  await tx.product_variants.deleteMany({
+  return await tx.product_variants.deleteMany({
     where: {
+      id: variantId,
       product_id: productId,
-      id: variantId
     }
   });
 };

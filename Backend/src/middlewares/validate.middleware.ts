@@ -6,7 +6,6 @@ export const validate = <T extends ZodType>( schema: T ) => {
   return ( req: Request, res: Response, next: NextFunction ) => {
 
     const result = schema.safeParse(req.body);
-
     if (!result.success) {
       return res.status(400).json({
         success: false,
