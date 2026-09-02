@@ -37,6 +37,7 @@ import productRoutes from "./modules/products/product.routes.js";
 // import cartRoutes from "./routes/cart.routes.js";
 // import orderRoutes from "./routes/order.routes.js";
 import csvRoutes from "./modules/csv/csv.routes.js";
+import productVariantsRoutes from "./modules/productVariants/productVariants.route.js";
 // import inventoryRoutes from "./modules/inventory/inventory.route.js"
 
 //auth route
@@ -44,6 +45,7 @@ app.use("/api/auth", authRoutes);
 
 //product route
 app.use("/api/products", productRoutes);
+app.use("/api/products", productVariantsRoutes);
 
 //cart route
 // app.use("/api",cartRoutes)

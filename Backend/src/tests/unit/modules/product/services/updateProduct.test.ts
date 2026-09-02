@@ -7,17 +7,13 @@ import {
     updateProduct,
     deleteProductImages,
     insertProductImages,
-    updateProductVariants,
 } from "../../../../../modules/products/product.repository.js";
-
 import {
     uploadImagesOnCloudinaryService,
     deleteFromCloudinary,
 } from "../../../../../infrastructure/storage/cloudinary.storage.js";
-
 import { prisma } from "../../../../../config/database.js";
 import { ApiError } from "../../../../../shared/utility/ApiError.js";
-
 
 // --------------------------------------------------
 // MOCK REPOSITORY
@@ -29,7 +25,6 @@ vi.mock("../../../../../modules/products/product.repository.js", () => ({
     updateProduct: vi.fn(),
     deleteProductImages: vi.fn(),
     insertProductImages: vi.fn(),
-    updateProductVariants: vi.fn(),
 })
 );
 
@@ -154,18 +149,6 @@ describe("updateProductService", () => {
                 mockTx
             );
 
-        expect(updateProductVariants)
-            .toHaveBeenCalledWith(
-                1,
-                [
-                    {
-                        size_name: "M",
-                        color: "Black",
-                        stock: 20,
-                    },
-                ],
-                mockTx
-            );
     });
 
 
@@ -234,27 +217,6 @@ describe("updateProductService", () => {
         expect(getProductById)
             .not.toHaveBeenCalled();
     });
-
-
-    // --------------------------------------------------
-    // INVALID VARIANTS
-    // --------------------------------------------------
-
-    it("should reject productVariants when it is not an array", async () => {
-
-        await expect(
-            updateProductService({
-                productId: 1,
-                body: {
-                    productVariants: "invalid",
-                },
-                files: {},
-            })
-        ).rejects.toThrow(
-            "productVariants must be an array"
-        );
-    });
-
 
     // --------------------------------------------------
     // INVALID DELETED IMAGES

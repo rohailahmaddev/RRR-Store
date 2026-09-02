@@ -41,7 +41,7 @@ router.route("/update-product/:id").put(
         min:0,
         max:5,
     }),
-    parseJsonFields(["productVariants","deletedImageIds"]),
+    parseJsonFields(["deletedImageIds"]),
     updateProductListingController
 )
 

@@ -30,17 +30,6 @@ export const createProductImages = async(productId:number,imagesLocalPaths:uploa
     })
 }
 
-export const createProductVariants = async(productId:number, productVariants:productVariantsList,tx:TransactionClient) => {
-    await tx.product_variants.createMany({
-        data:productVariants.map((variant)=>({
-            product_id:productId,
-            size_name:variant.size_name,
-            color:variant.color,
-            stock:variant.stock
-        }))
-    })
-}
-
 export const getProductById = async(productId:number) => {
     return await prisma.products.findUnique({
         where:{id:productId}
@@ -90,29 +79,6 @@ export const insertProductImages = async ( productId: number, images: any[], tx:
       is_primary: index === 0,
     })),
   });
-};
-
-export const updateProductVariants = async ( productId: number, variants: any[], tx: any ) => {
-  for (const variant of variants) {
-    await tx.product_variants.upsert({
-      where: {
-        product_id_size_name_color: {
-          product_id: productId,
-          size_name: variant.size_name,
-          color: variant.color,
-        },
-      },
-      update: {
-        stock: variant.stock,
-      },
-      create: {
-        product_id: productId,
-        size_name: variant.size_name,
-        color: variant.color,
-        stock: variant.stock,
-      },
-    });
-  }
 };
 
 export const getProductByQuery = async ( query: any, params: any[] ) => {
@@ -183,4 +149,37 @@ export const getSingleProduct = async( productId:number ) => {
         WHERE products.id = ?  AND products.is_Active = true
   `
   return getProductByQuery(query,[productId])
+}
+
+export const getProductCategoryIdByProductId = async( productId:number ) => {
+  return prisma.products.findUnique({
+    where:{id:productId},
+    select:{
+      name:true,
+      category_id:true
+    }
+  })
+}
+
+export const getRelatedProducts = async( categoryId:number|null, productId:number, productName:string ) => {
+  const query = `SELECT products.id, products.sku, products.name, products.description, products.price, products.rating,
+    products.rating_count,
+    categories.name AS category_name,
+
+    (
+        SELECT image_url 
+        FROM product_images 
+        WHERE product_images.product_id = products.id 
+          AND product_images.is_primary = true 
+        LIMIT 1
+    ) AS image_url
+
+    FROM products
+    LEFT JOIN categories
+    ON categories.id = products.category_id
+    WHERE products.category_id = ? AND products.id != ? AND products.name LIKE ? AND products.is_active = true 
+    ORDER BY products.rating ASC 
+    LIMIT 10`
+
+  return getProductByQuery(query,[categoryId,productId,`%${productName}%`])
 }

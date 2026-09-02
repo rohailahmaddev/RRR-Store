@@ -3,13 +3,22 @@ import { deleteFromCloudinary, uploadImagesOnCloudinaryService } from "../../inf
 import { ApiError } from "../../shared/utility/ApiError.js";
 import { validateVariantsArray } from "../../shared/utility/helper.js";
 import { getErrorMessage } from "../../shared/utility/tryCatchError.js";
-import { createProduct, createProductImages, createProductVariants, deleteProductImages, getProductById, getProductByQuery, getProductCount, getProductImagePublicIds, getSingleProduct, insertProductImages, updateProduct, updateProductVariants } from "./product.repository.js";
+import { createProduct, createProductImages,updateProduct, deleteProductImages, getProductById, getProductByQuery, getProductCount, getProductImagePublicIds, getSingleProduct, insertProductImages, getProductCategoryIdByProductId, getRelatedProducts } from "./product.repository.js";
 import { addProduct, getProductInput } from "./product.types.js";
 import { UpdateProductInput } from "./product.types.js"
 import { insertCategoriesService } from "../categories/categories.services.js";
 import { auditLogs } from "../logs/logs.services.js";
+import { Request } from "express";
+import { createProductVariants } from "../productVariants/productVariants.repository.js";
 
 export const addProductService = async ({ productName, description, price, categoryName, sku, productVariants, imageLocalPaths }: addProduct) => {
+
+  if (!Array.isArray(productVariants)) {
+    throw new ApiError(
+      400,
+      "productVariants must be an array"
+    );
+  }
 
   const uploadedImages = await uploadImagesOnCloudinaryService(imageLocalPaths);
   let productId
@@ -265,7 +274,7 @@ export const getProductsService = async (RequestQuery: any) => {
 
 }
 
-export const getSingleProductService = async(req:any) => {
+export const getSingleProductService = async(req:Request) => {
   const {id} = req.params;
 
   if(!Number.isInteger(Number(id)) || Number(id) <= 0){
@@ -313,7 +322,7 @@ export const deactivateProductListingService = async (req:any) => {
     await updateProduct(productId, { is_active: false }, prisma);
 
     await auditLogs({
-      userId: req.user.id,
+      userId: req?.user?.id,
       action: "DEACTIVATE_PRODUCT_LISTING",
       entityType: "product",
       entityId: productId,
@@ -378,3 +387,27 @@ export const activateProductListingService = async (req:any) => {
 
 }
 
+export const getRelatedProductsService = async (req:any) => {
+  const { id } = req.params;
+
+  if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
+    throw new ApiError(400, "Invalid product ID");
+  }
+
+  const productId = Number(id);
+  
+  try {
+    const product = await getProductCategoryIdByProductId(productId);
+    if(!product){
+      throw new ApiError(404, "Product not found");
+    }
+
+    const relatedProducts = await getRelatedProducts(product?.category_id,productId, product.name);
+    return relatedProducts;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(500, `Failed to fetch related products. ${getErrorMessage(error)}`);
+  } 
+}
