@@ -3,8 +3,6 @@ import { TransactionClient } from "../../generated/prisma/internal/prismaNamespa
 import { productVariantsList, uploadImagesList } from "../../shared/types/index.types.js";
 import { createProducts } from "./product.types.js";
 
-
-
 export const createProduct = async({productName, description, price, categoryId,sku,tx}:createProducts) =>{
     const result = await tx.products.create({
         data:{

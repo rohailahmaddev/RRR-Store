@@ -17,3 +17,30 @@ export const getCategoryByName = async(categroyName:string,tx:any) => {
 
     return result
 }
+
+export const getCategories = async() => {
+    const result = await prisma.categories.findMany({
+        orderBy:{
+            name:'asc'
+        }
+    })
+    return result;
+}
+
+export const updateCategory = async(id:number,categoryName:string,slug:string) => {
+    return await prisma.categories.update({
+        where:{
+            id:id
+        },
+        data:{
+            name:categoryName,
+            slug:slug
+        }
+    })
+}
+
+export const deleteCategory = async(id:number) => {
+    return await prisma.categories.delete({
+        where:{id:id}
+    })
+}
