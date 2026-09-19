@@ -34,7 +34,7 @@ app.use(cookieParser());
 
 import authRoutes from "./modules/auth/auth.routes.js";
 import productRoutes from "./modules/products/product.routes.js";
-// import cartRoutes from "./routes/cart.routes.js";
+import cartRoutes from "./modules/cart/cart.routes.js";
 // import orderRoutes from "./routes/order.routes.js";
 import csvRoutes from "./modules/csv/csv.routes.js";
 import productVariantsRoutes from "./modules/productVariants/productVariants.route.js";
@@ -48,7 +48,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/products", productVariantsRoutes);
 
 //cart route
-// app.use("/api",cartRoutes)
+app.use("/api/cart",cartRoutes)
 
 //order route
 // app.use("/api/order",orderRoutes)

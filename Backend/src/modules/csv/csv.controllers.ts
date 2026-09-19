@@ -20,5 +20,7 @@ export const exportProductVariantCSVController = asyncHandler(async(req:Request,
 export const importProductVariantCSVController = asyncHandler(async(req:Request, res:Response) => {
     const filePath = req.file?.path;
     await importCSVServices(req,filePath);
-    res.status(200).json(new ApiResponse(200, "All products imported successfully from CSV file") );
+    res
+    .status(200)
+    .json(new ApiResponse(200, "All products imported successfully from CSV file") );
 })

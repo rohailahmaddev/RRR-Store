@@ -1,6 +1,7 @@
 import { prisma } from "../../config/database.js"
 import { TransactionClient } from "../../generated/prisma/internal/prismaNamespace.js"
 import { productVariantsList } from "../../shared/types/index.types.js"
+import { validateProductSizeInput } from "./productVariants.types.js"
 
 export const createProductVariants = async(productId:number, productVariants:productVariantsList,tx:TransactionClient = prisma) => {
     await tx.product_variants.createMany({
@@ -52,3 +53,13 @@ export const getProductVariantsByProductId = async ( productId: number, tx: Tran
     }
   });
 };
+
+export const validateProductSize = async ({productId, productVariantId, color}:validateProductSizeInput) => {
+  return prisma.product_variants.findMany({
+    where:{
+      id:productVariantId,
+      product_id:productId,
+      color:color
+    }
+  })
+}

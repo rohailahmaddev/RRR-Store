@@ -1,7 +1,8 @@
 import { ApiError } from "../../shared/utility/ApiError.js";
 import { validateVariantsArray } from "../../shared/utility/helper.js";
 import { getErrorMessage } from "../../shared/utility/tryCatchError.js";
-import { createProductVariants, deleteProductVariant, getProductVariantsByProductId, updateProductVariants } from "./productVariants.repository.js";
+import { createProductVariants, deleteProductVariant, getProductVariantsByProductId, updateProductVariants, validateProductSize } from "./productVariants.repository.js";
+import { validateProductSizeServiceInput } from "./productVariants.types.js";
 
 export const addProductVariantsService = async (req:any) => {
     const {id} = req.params;
@@ -99,4 +100,25 @@ export const getProductVariantsService = async (req:any) => {
       }
       throw new ApiError(500, "Failed to fetch product variants");
     }
+}
+
+export const validateProductSizeService = async ({productId, productVariantId, color, quantity}:validateProductSizeServiceInput) => {
+
+  try {
+    const validProductSize = await validateProductSize({productId, productVariantId, color})
+
+    if (validProductSize.length === 0) {
+      throw new ApiError(404, "Product size not found");
+    }
+
+    if ((validProductSize[0]?.stock ?? 0) < quantity) {
+      throw new ApiError(400, "Insufficient stock");
+    }
+
+    return validProductSize;
+    
+  } catch (error) {
+    throw new ApiError(500,`Internal server error ${getErrorMessage(error)}`)
+  }
+
 }
