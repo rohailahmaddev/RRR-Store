@@ -135,6 +135,16 @@ export const updateForgotPasswordToken = async (userId: number, hashedToken: str
     return result;
 }
 
+export const clearForgotPasswordToken = async (userId:number) => {
+  return prisma.users.update({
+    where: { id: userId },
+    data: {
+      reset_token: null,
+      reset_token_expiry: null,
+    },
+  });
+};
+
 export const getUserByResetPasswordToken = async (hashedToken: string) => {
     const result = await prisma.users.findMany({
         where: {

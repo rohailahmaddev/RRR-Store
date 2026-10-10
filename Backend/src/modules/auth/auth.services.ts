@@ -2,7 +2,7 @@ import type { Request, Response } from "express"
 import { sendFogotPasswordEmail, sendVerificationEmail } from "../../infrastructure/email/email.services.js"
 import { getTemporaryToken } from "../../shared/auth/jwt.js"
 import { ApiError } from "../../shared/utility/ApiError.js"
-import { activateUser, createUser, deactivateUser, getUserByEmailRepo, getUserById, getUserByResetPasswordToken, lockedUserAccount, logoutUser, revokeAllActiveRefreshTokensById, revokeRefreshToken, selectRefreshToken, unlockUserAccount, updateFailedAttempts, updateForgotPasswordToken, updateUserPasswordById, updateVerificationEmailTokenRepo, verifyEmailRepo } from "./auth.repository.js"
+import { activateUser, clearForgotPasswordToken, createUser, deactivateUser, getUserByEmailRepo, getUserById, getUserByResetPasswordToken, lockedUserAccount, logoutUser, revokeAllActiveRefreshTokensById, revokeRefreshToken, selectRefreshToken, unlockUserAccount, updateFailedAttempts, updateForgotPasswordToken, updateUserPasswordById, updateVerificationEmailTokenRepo, verifyEmailRepo } from "./auth.repository.js"
 import { User } from "../../shared/types/index.types.js"
 import { loginUser, registerUserInput } from "./auth.types.js"
 import { deleteFromCloudinary, uploadOnCloudinary } from "../../infrastructure/storage/cloudinary.storage.js"
@@ -349,7 +349,17 @@ export const forgotPasswordService = async (email: string, req: Request) => {
         throw new ApiError(500, "Failed to generate the tokens try again")
     }
 
-    await sendFogotPasswordEmail(user, req, unHashedToken);
+    try {
+        await sendFogotPasswordEmail(user, req, unHashedToken);
+    } catch (error) {
+        // Remove the token that the user never received.
+        try {
+            await clearForgotPasswordToken(user.id);
+        } catch (cleanupError) {
+            console.error("Failed to clear password reset token:",cleanupError);
+          throw new ApiError(500,"Unable to send the password reset email. Please try again.");
+        }
+    }
 
     return null;
 }

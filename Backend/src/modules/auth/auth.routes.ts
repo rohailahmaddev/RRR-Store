@@ -38,7 +38,6 @@ router.route("/login").post(
 
 router.route("/logout").post(
     RequestId,
-    verifyJWT,
     logoutUserController
 )
 
