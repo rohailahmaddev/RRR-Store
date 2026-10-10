@@ -97,7 +97,7 @@ export const userRegisterService = async ({
 export const verifyEmailService = async (unhashedToken: string) => {
 
     if (unhashedToken.trim() === '') {
-        throw new ApiError(402, "Token is not present. Please resend verification email")
+        throw new ApiError(400, "Token is not present. Please resend verification email")
     }
 
     const hashedToken = hashToken(unhashedToken)
@@ -105,7 +105,6 @@ export const verifyEmailService = async (unhashedToken: string) => {
     let result;
     try {
         result = await verifyEmailRepo(hashedToken)
-
     } catch (error) {
         throw new ApiError(500, `Something went wrong.`)
     }
