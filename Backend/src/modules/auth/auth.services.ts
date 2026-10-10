@@ -124,11 +124,11 @@ export const verifyEmailService = async (unhashedToken: string) => {
 
 export const resendVerificationEmailService = async (email: string, req: Request) => {
 
-    if (email.trim() === '') {
-        throw new ApiError(402, "Please provide register email for resend verification email.")
+    if (typeof email !== "string" || email.trim() === "") {
+        throw new ApiError(400, "Please provide register email for resend verification email.")
     }
 
-    const user = await getUserByEmailRepo(email)
+    const user = await getUserByEmailRepo(email.trim())
 
     if (!user) {
         throw new ApiError(400, "Invalid email. Please register first.")
