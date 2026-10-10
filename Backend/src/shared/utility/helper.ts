@@ -10,6 +10,7 @@ import { Decimal, TransactionClient } from "../../generated/prisma/internal/pris
 import bcrypt from "bcrypt";
 import { getErrorMessage } from "./tryCatchError.js";
 import ms from "ms"
+import z from "zod";
 
 export const hashToken = (token:string):string => {    
   return crypto.createHmac("sha256",env.TEMPORARY_TOKEN_SECRET).update(token).digest("hex");
@@ -152,3 +153,9 @@ export const parseJson = (ele?:string):[] => {
 
   return Array;
 }
+
+export const requiredString = (label:string) =>
+  z.string({
+    error: (issue) =>
+      issue.input === undefined ? `Please provide register ${label}` : `${label} must be text`,
+});
