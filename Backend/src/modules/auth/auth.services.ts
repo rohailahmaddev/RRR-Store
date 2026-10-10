@@ -72,6 +72,11 @@ export const userRegisterService = async ({
         if (avatarImage?.public_id) {
             await deleteFromCloudinary(avatarImage.public_id)
         }
+
+        if (error && typeof error === "object" && "code" in error && error.code === "ER_DUP_ENTRY") {
+            throw new ApiError(409, "User already exist. Please login.");
+        }
+
         throw new ApiError(500, `Failed to create the user. ${getErrorMessage(error)}`)
     }
 
@@ -87,6 +92,8 @@ export const userRegisterService = async ({
     return insertedUser;
 }
 
+
+
 export const verifyEmailService = async (unhashedToken: string) => {
 
     if (unhashedToken.trim() === '') {
@@ -98,7 +105,12 @@ export const verifyEmailService = async (unhashedToken: string) => {
     let result;
     try {
         result = await verifyEmailRepo(hashedToken)
+
     } catch (error) {
+        throw new ApiError(500, `Something went wrong.`)
+    }
+
+    if(!result){
         throw new ApiError(400, `Invalid user or verification time is over. Please request a new verification email.`)
     }
 

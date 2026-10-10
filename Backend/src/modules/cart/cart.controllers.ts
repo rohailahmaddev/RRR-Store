@@ -1,7 +1,7 @@
 import { ApiError } from "../../shared/utility/ApiError.js";
 import { ApiResponse } from "../../shared/utility/ApiResponse.js";
 import { asyncHandler } from "../../shared/utility/asyncHandler.js";
-import { createCartService, getCartItemsService } from "./cart.services.js";
+import { createCartService, getCartItemsService, removeCartItemsService } from "./cart.services.js";
 
 export const createCartContorller = asyncHandler(async (req, res) => {
     const insertedItem = await createCartService(req);
@@ -35,4 +35,12 @@ export const getCartItemsController = asyncHandler(async (req, res) => {
         })
     );
 
+})
+
+export const removeCartItemController = asyncHandler(async (req, res) => {
+    const deletedItem = await removeCartItemsService(req);
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, "Item deleted successfully.", deletedItem))
 })

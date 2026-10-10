@@ -47,21 +47,29 @@ export const createUser = async ({ full_name, email, hashedPassword, phone, imag
     return result;
 }
 
-export const verifyEmailRepo = async (hashedToken: string) => {
-    const user = await prisma.users.update({
-        where: {
-            verify_token: hashedToken,
-            verify_token_expiry: {
-                gt: new Date(),
-            },
-        },
-        data: {
-            is_verified: true
-        }
-    })
+export const verifyEmailRepo = async (hashedToken:string) => {
+  const user = await prisma.users.findFirst({
+    where: {
+      verify_token: hashedToken,
+      verify_token_expiry: {
+        gt: new Date(),
+      },
+    },
+  });
 
-    return user;
-}
+  if (!user) {
+    return null;
+  }
+
+  return prisma.users.update({
+    where: { id: user.id },
+    data: {
+      is_verified: true,
+      verify_token: null,
+      verify_token_expiry: null,
+    },
+  });
+};
 
 export const lockedUserAccount = async (id: number, failed_attempts: number, locked_min: number) => {
     await prisma.users.update({

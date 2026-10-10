@@ -48,3 +48,22 @@ export const getCartItems = async (cartId:number) => {
         WHERE p.is_active = true AND ci.cart_id = ${cartId}
     `
 }
+
+export const deleteCartItem = async(cartItemId:number, cartId:number) => {
+    return prisma.cart_items.delete({
+        where:{
+            id:cartItemId,
+            cart_id:cartId
+        }
+    })
+}
+
+export const getCartItemForUpdate = async(cartItemId:number, userId:number) => {
+    return prisma.$queryRaw `
+       SELECT ci.cart_id, ci.quantity, pv.stock
+       FROM cart_items ci
+       JOIN cart c ON ci.cart_id = c.id
+       JOIN product_variants pv ON ci.product_variant_id = pv.id
+       WHERE ci.id = ${cartItemId} AND c.user_id = ${userId}
+    `
+}

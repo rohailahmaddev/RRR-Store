@@ -1,8 +1,8 @@
-import { Request, Response } from "express";
+import { Request } from "express";
 import { ApiError } from "../../shared/utility/ApiError.js";
 import { getErrorMessage } from "../../shared/utility/tryCatchError.js";
 import { validateProductSizeService } from "../productVariants/productVariants.services.js";
-import { createCart, findCart, getCartItems, insertItems } from "./cart.repository.js";
+import { createCart, deleteCartItem, findCart, getCartItemForUpdate, getCartItems, insertItems } from "./cart.repository.js";
 import { calculateQuantity, calculateSubTotal } from "../../shared/utility/helper.js";
 
 export const findOrCreateCartService = async (userId: number) => {
@@ -26,7 +26,6 @@ export const findOrCreateCartService = async (userId: number) => {
         throw new ApiError(500, `Internal server error. ${getErrorMessage(error)}`)
     }
 }
-
 
 export const createCartService = async (req: Request) => {
     const userId = Number(req?.user?.id);
@@ -72,5 +71,64 @@ export const getCartItemsService = async (req: Request) => {
 
     } catch (error) {
         throw new ApiError(500, `Internal server error. ${getErrorMessage(error)}`)
+    }
+}
+
+export const removeCartItemsService = async ( req:Request) => {
+    const userId = Number(req.user?.id);
+    const id = req?.params;
+
+    if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
+        throw new ApiError(400, "Invalid ID");
+    }
+
+    const cartItemId = Number(id)
+
+    try {
+        const cart = await findCart(userId);
+        
+        if(!cart){
+            throw new ApiError(404, "Cart not found");
+        }
+
+        const cartId = cart?.id;
+        const deletedItem = await deleteCartItem(cartItemId, cartId);
+
+        return deletedItem;
+
+    } catch (error) {
+        if(error instanceof ApiError){
+           throw error
+        }
+
+        throw new ApiError(500, `Internal server error. ${getErrorMessage(error)}`)
+    }
+
+}
+
+export const updateCartQuantity = async (req:Request) => {
+    const userId = Number(req.user?.id);
+    const { id } = req.params;
+    const { operation } = req.body;
+
+    
+    if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
+        throw new ApiError(400, "Invalid ID");
+    }
+    
+    const cartItemId = Number(id);
+
+    try {
+
+        const items = await getCartItemForUpdate(cartItemId, userId);
+
+        if(Array.isArray(items) && items.length ===0 ) {
+            throw new ApiError(404, "Item not found.");
+        }
+
+        
+
+    } catch (error) {
+        
     }
 }
