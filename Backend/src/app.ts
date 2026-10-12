@@ -1,10 +1,10 @@
 import express from "express";
-import {env} from "./config/env.js"
+import { env } from "./config/env.js"
 import { RequestId } from "./middlewares/requestId.middleware.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { errorHandler } from "./middlewares/errorHandler.js";
-import {ApiError} from "./shared/utility/ApiError.js";
+import { ApiError } from "./shared/utility/ApiError.js";
 import compression from "compression";
 
 const app = express();
@@ -15,8 +15,8 @@ app.use(RequestId)
 //cors configrations
 app.use(
     cors({
-        origin:env.CORS_ORIGIN || "http://localhost:5473",
-        credentials:true
+        origin: env.CORS_ORIGIN || "http://localhost:5473",
+        credentials: true
     })
 );
 
@@ -24,7 +24,7 @@ app.use(
 app.use(compression());
 
 // other configurations
-app.use(express.json({limit:"16kb"}));
+app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
@@ -48,13 +48,13 @@ app.use("/api/products", productRoutes);
 app.use("/api/products", productVariantsRoutes);
 
 //cart route
-app.use("/api/cart",cartRoutes)
+app.use("/api/cart", cartRoutes)
 
 //order route
 // app.use("/api/order",orderRoutes)
 
 // csv route
-app.use("/api/csv",csvRoutes)
+app.use("/api/csv", csvRoutes)
 
 //invetory route
 // app.use("/api/admin/",inventoryRoutes)
@@ -63,7 +63,7 @@ app.use("/api/csv",csvRoutes)
 // app.use("/api/admin/")
 
 app.use((req, res, next) => {
-  next(new ApiError(404, `Route not found: ${req.originalUrl}`));
+    next(new ApiError(404, `Route not found: ${req.originalUrl}`));
 });
 
 //error handler middleware 

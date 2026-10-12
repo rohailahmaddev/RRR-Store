@@ -357,8 +357,8 @@ export const forgotPasswordService = async (email: string, req: Request) => {
             await clearForgotPasswordToken(user.id);
         } catch (cleanupError) {
             console.error("Failed to clear password reset token:",cleanupError);
-          throw new ApiError(500,"Unable to send the password reset email. Please try again.");
         }
+        throw new ApiError(500,"Unable to send the password reset email. Please try again.");
     }
 
     return null;
@@ -374,15 +374,15 @@ export const resetPasswordService = async (unhashedToken: string, newPassword: s
         throw new ApiError(500, "Failed to found the user try again.")
     }
 
-    if (user.length === 0) {
+    if (!user || user.length === 0) {
         throw new ApiError(400, "Invalid user or reset time is over. Please request a new password reset link.")
     }
-
-    const hashedPassword = await hashPassword(newPassword)
 
     if (!user[0]?.id) {
         throw new ApiError(400, "Invalid user or reset time is over. Please request a new password reset link.")
     }
+
+    const hashedPassword = await hashPassword(newPassword)
 
     try {
         await updateUserPasswordById(user[0]?.id, hashedPassword)
